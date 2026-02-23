@@ -1,0 +1,143 @@
+{
+  "realm": "event-ticketing",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 30,
+  "roles": {
+    "realm": [
+      {
+        "name": "SUPER_ADMIN",
+        "description": "Platform super administrator"
+      },
+      {
+        "name": "ADMIN_ORG",
+        "description": "Organization administrator"
+      },
+      {
+        "name": "SCANNER",
+        "description": "Event entrance scanner"
+      },
+      {
+        "name": "GUEST",
+        "description": "Regular user/attendee"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "event-ticketing-client",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8080/*",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8080",
+        "http://localhost:3000"
+      ],
+      "attributes": {
+        "access.token.lifespan": "86400"
+      }
+    },
+    {
+      "clientId": "mobile-app",
+      "enabled": true,
+      "publicClient": true,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "com.eventticketing.app://callback"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin@eventticketing.com",
+      "firstName": "Super",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["SUPER_ADMIN"]
+    },
+    {
+      "username": "organizer",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "organizer@eventticketing.com",
+      "firstName": "Event",
+      "lastName": "Organizer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "organizer123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["ADMIN_ORG"]
+    },
+    {
+      "username": "scanner",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "scanner@eventticketing.com",
+      "firstName": "Ticket",
+      "lastName": "Scanner",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "scanner123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["SCANNER"]
+    },
+    {
+      "username": "guest",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "guest@eventticketing.com",
+      "firstName": "Regular",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "guest123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["GUEST"]
+    }
+  ]
+}

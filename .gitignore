@@ -1,0 +1,103 @@
+# ========================================
+# Java & Maven
+# ========================================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+*.ear
+*.log
+*.ctxt
+.mtj.tmp/
+hs_err_pid*
+
+# ========================================
+# IDE
+# ========================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+.metadata/
+
+# ========================================
+# Environment & Secrets
+# ========================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*-credentials.json
+firebase-credentials.json
+
+# ========================================
+# Logs
+# ========================================
+logs/
+*.log
+*.log.*
+
+# ========================================
+# Docker
+# ========================================
+docker-compose.override.yml
+
+# ========================================
+# OS
+# ========================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ========================================
+# Flutter
+# ========================================
+mobile/event_ticketing_app/.dart_tool/
+mobile/event_ticketing_app/.flutter-plugins
+mobile/event_ticketing_app/.flutter-plugins-dependencies
+mobile/event_ticketing_app/.packages
+mobile/event_ticketing_app/build/
+mobile/event_ticketing_app/.pub-cache/
+mobile/event_ticketing_app/.pub/
+mobile/event_ticketing_app/pubspec.lock
+
+# ========================================
+# Temporary Files
+# ========================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ========================================
+# Uploads & Generated Files
+# ========================================
+uploads/
+generated/
+
+
+/shared/
+/scripts/
+/mobile/
+/postman/
+/jenkins/
+/infrastructure/
+/deployment/
+/services/analytics-service/
+/services/event-service
+/services/notification-service
+/services/order-service
+/services/organization-service
+/services/payment-service
+/services/ticket-service
+
+
+

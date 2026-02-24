@@ -89,7 +89,6 @@ generated/
 /mobile/
 /postman/
 /jenkins/
-/infrastructure/
 /deployment/
 /services/analytics-service/
 /services/event-service

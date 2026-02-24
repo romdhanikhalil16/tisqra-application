@@ -6,7 +6,7 @@ services:
   # ========================================
   postgres:
     image: postgres:16-alpine
-    container_name: eventticket-postgres
+    container_name: tisqra-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -30,7 +30,7 @@ services:
   # ========================================
   redis:
     image: redis:7-alpine
-    container_name: eventticket-redis
+    container_name: tisqra-redis
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD:-root}
     ports:
@@ -50,7 +50,7 @@ services:
   # ========================================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
-    container_name: eventticket-zookeeper
+    container_name: tisqra-zookeeper
     restart: unless-stopped
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -68,7 +68,7 @@ services:
   # ========================================
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    container_name: eventticket-kafka
+    container_name: tisqra-kafka
     restart: unless-stopped
     depends_on:
       - zookeeper
@@ -98,7 +98,7 @@ services:
   # ========================================
   keycloak:
     image: quay.io/keycloak/keycloak:23.0
-    container_name: eventticket-keycloak
+    container_name: tisqra-keycloak
     restart: unless-stopped
     command: start-dev
     environment:
@@ -133,7 +133,7 @@ services:
     build:
       context: .
       dockerfile: ./infrastructure/discovery-service/Dockerfile
-    container_name: eventticket-discovery
+    container_name: tisqra-discovery
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -154,7 +154,7 @@ services:
     build:
       context: .
       dockerfile: ./infrastructure/config-server/Dockerfile
-    container_name: eventticket-config
+    container_name: tisqra-config
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -178,7 +178,7 @@ services:
     build:
       context: .
       dockerfile: ./infrastructure/api-gateway/Dockerfile
-    container_name: eventticket-gateway
+    container_name: tisqra-gateway
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -207,13 +207,13 @@ services:
     build:
       context: .
       dockerfile: ./services/user-service/Dockerfile
-    container_name: eventticket-identity
+    container_name: tisqra-identity
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      POSTGRES_USER: ${POSTGRES_USER:-eventticket_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
     ports:
       - "8081:8081"
@@ -230,13 +230,13 @@ services:
     build:
       context: .
       dockerfile: ./services/organization-service/Dockerfile
-    container_name: eventticket-organization
+    container_name: tisqra-organization
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      POSTGRES_USER: ${POSTGRES_USER:-eventticket_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
     ports:
       - "8082:8082"
     depends_on:
@@ -251,13 +251,13 @@ services:
     build:
       context: .
       dockerfile: ./services/event-service/Dockerfile
-    container_name: eventticket-event
+    container_name: tisqra-event
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      POSTGRES_USER: ${POSTGRES_USER:-eventticket_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
     ports:
       - "8083:8083"
     depends_on:
@@ -272,13 +272,13 @@ services:
     build:
       context: .
       dockerfile: ./services/order-service/Dockerfile
-    container_name: eventticket-order
+    container_name: tisqra-order
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      POSTGRES_USER: ${POSTGRES_USER:-eventticket_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
     ports:
       - "8084:8084"
     depends_on:
@@ -293,13 +293,13 @@ services:
     build:
       context: .
       dockerfile: ./services/ticket-service/Dockerfile
-    container_name: eventticket-ticket
+    container_name: tisqra-ticket
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      POSTGRES_USER: ${POSTGRES_USER:-eventticket_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
     ports:
       - "8085:8085"
     depends_on:
@@ -314,13 +314,13 @@ services:
     build:
       context: .
       dockerfile: ./services/payment-service/Dockerfile
-    container_name: eventticket-payment
+    container_name: tisqra-payment
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      POSTGRES_USER: ${POSTGRES_USER:-eventticket_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
     ports:
       - "8086:8086"
     depends_on:
@@ -335,12 +335,12 @@ services:
     build:
       context: .
       dockerfile: ./services/notification-service/Dockerfile
-    container_name: eventticket-notification
+    container_name: tisqra-notification
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      POSTGRES_USER: ${POSTGRES_USER:-eventticket_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
       BREVO_SMTP_HOST: ${BREVO_SMTP_HOST}
       BREVO_SMTP_USERNAME: ${BREVO_SMTP_USERNAME}
       BREVO_SMTP_PASSWORD: ${BREVO_SMTP_PASSWORD}
@@ -357,13 +357,13 @@ services:
     build:
       context: .
       dockerfile: ./services/analytics-service/Dockerfile
-    container_name: eventticket-analytics
+    container_name: tisqra-analytics
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      POSTGRES_USER: ${POSTGRES_USER:-eventticket_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
     ports:
       - "8088:8088"
     depends_on:

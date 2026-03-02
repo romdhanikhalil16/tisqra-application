@@ -7,8 +7,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/event_db
-    username: ${POSTGRES_USER:eventticket_admin}
-    password: ${POSTGRES_PASSWORD:changeme}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:root}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -29,7 +29,7 @@ spring:
     redis:
       host: localhost
       port: 6379
-      password: ${REDIS_PASSWORD:changeme}
+      password: ${REDIS_PASSWORD:root}
 
   kafka:
     bootstrap-servers: localhost:9092

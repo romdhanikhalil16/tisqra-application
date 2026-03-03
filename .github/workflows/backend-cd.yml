@@ -1,1 +1,65 @@
-﻿Tool call argument 'initial_content' pruned from message history.
+name: Backend Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'infrastructure/**'
+      - 'services/**'
+      - 'shared/**'
+      - '.github/workflows/backend-cd.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Build with Maven
+      run: mvn clean package -DskipTests
+    
+    - name: Run Tests
+      run: mvn test
+    
+    - name: Docker Login
+      if: github.ref == 'refs/heads/main'
+      uses: docker/login-action@v2
+      with:
+        registry: docker.io
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and Push Docker Images
+      if: github.ref == 'refs/heads/main'
+      run: |
+        docker build -t tisqra/api-gateway:latest infrastructure/api-gateway/
+        docker build -t tisqra/config-server:latest infrastructure/config-server/
+        docker build -t tisqra/discovery-service:latest infrastructure/discovery-service/
+        docker build -t tisqra/user-service:latest services/user-service/
+        docker build -t tisqra/event-service:latest services/event-service/
+        docker build -t tisqra/notification-service:latest services/notification-service/
+        
+        docker push tisqra/api-gateway:latest
+        docker push tisqra/config-server:latest
+        docker push tisqra/discovery-service:latest
+        docker push tisqra/user-service:latest
+        docker push tisqra/event-service:latest
+        docker push tisqra/notification-service:latest
+    
+    - name: Notify Slack
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: 'Backend CD Pipeline - ${{ job.status }}'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}

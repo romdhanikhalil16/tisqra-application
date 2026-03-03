@@ -1,1 +1,59 @@
-﻿Tool call argument 'initial_content' pruned from message history.
+name: Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - config-server
+          - discovery-service
+          - user-service
+          - event-service
+          - notification-service
+        
+        include:
+          - service: api-gateway
+            path: infrastructure/api-gateway
+          - service: config-server
+            path: infrastructure/config-server
+          - service: discovery-service
+            path: infrastructure/discovery-service
+          - service: user-service
+            path: services/user-service
+          - service: event-service
+            path: services/event-service
+          - service: notification-service
+            path: services/notification-service
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+        context: ${{ matrix.path }}
+        push: true
+        tags: |
+          tisqra/${{ matrix.service }}:latest
+          tisqra/${{ matrix.service }}:${{ github.sha }}
+        cache-from: type=registry,ref=tisqra/${{ matrix.service }}:buildcache
+        cache-to: type=registry,ref=tisqra/${{ matrix.service }}:buildcache,mode=max

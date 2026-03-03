@@ -1,6 +1,6 @@
 ﻿# 🎫 Tisqra Platform
 
-A production-ready SaaS microservices platform for event management and ticketing with mobile support.
+A production-ready SaaS microservices platform for event management and ticketing.
 
 ## 📋 Table of Contents
 
@@ -9,7 +9,6 @@ A production-ready SaaS microservices platform for event management and ticketin
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
 - [Services](#services)
-- [Mobile App](#mobile-app)
 - [API Documentation](#api-documentation)
 - [Development](#development)
 
@@ -87,7 +86,6 @@ A comprehensive event management and ticketing platform built with microservices
 - **Docker & Docker Compose** - Containerization
 
 ### Mobile
-- **Flutter** - Cross-platform mobile framework
 - **Clean Architecture** - Separation of concerns
 - **Firebase Cloud Messaging** - Push notifications
 
@@ -104,7 +102,6 @@ A comprehensive event management and ticketing platform built with microservices
 - **Java 21** or higher
 - **Maven 3.8+**
 - **Docker & Docker Compose**
-- **Flutter SDK** (for mobile app)
 - **Git**
 
 ### Installation
@@ -198,26 +195,6 @@ notification.push.send
 analytics.sales.recorded
 ```
 
-## 📱 Mobile App
-
-The Flutter mobile app is located in `mobile/tisqra_mobile_app/`
-
-### Features
-- User authentication with Keycloak
-- Browse and search events
-- Purchase tickets with promo codes
-- Digital wallet for tickets
-- QR code display and scanning
-- Push notifications
-- Organization dashboards
-
-### Running the Mobile App
-
-```bash
-cd mobile/tisqra_mobile_app
-flutter pub get
-flutter run
-```
 
 ## 📚 API Documentation
 
@@ -272,8 +249,6 @@ tisqra-platform/
 ├── shared/                 # Shared libraries
 │   ├── common-models/      # Common DTOs and utilities
 │   └── kafka-events/       # Kafka event schemas
-├── mobile/                 # Flutter mobile app
-│   └── tisqra_mobile_app/
 ├── docker/                 # Docker configurations
 ├── docs/                   # Documentation
 ├── scripts/                # Utility scripts

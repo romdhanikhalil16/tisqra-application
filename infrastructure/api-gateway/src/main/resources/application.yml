@@ -5,7 +5,14 @@ spring:
   application:
     name: api-gateway
   
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2000
+  
   cloud:
+    config:
+      enabled: false
     gateway:
       discovery:
         locator:
@@ -81,7 +88,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8180/realms/tisqra
-          jwk-set-uri: http://localhost:8180/realms/tisqra/protocol/openid-connect/certs
+          jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
 
 eureka:
   client:
@@ -100,7 +107,14 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
     gateway:
+      enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
       enabled: true
 
 logging:

@@ -1,0 +1,12 @@
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\PaymentFailedEvent.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\OrderCreatedEvent.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\TicketGeneratedEvent.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\PaymentCompletedEvent.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\SalesRecordedEvent.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\SendPushEvent.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\EventPublishedEvent.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\OrganizationCreatedEvent.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\SendEmailEvent.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\TicketTransferredEvent.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\config\KafkaTopics.java
+C:\Users\Khalil-ROMDHANI\Desktop\tisqra-platform\shared\kafka-events\src\main\java\com\tisqra\kafka\events\TicketValidatedEvent.java

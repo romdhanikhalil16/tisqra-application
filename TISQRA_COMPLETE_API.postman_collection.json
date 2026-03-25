@@ -1,0 +1,401 @@
+{
+  "info": {
+    "name": "TISQRA Platform - Complete API Collection",
+    "description": "All services endpoints for TISQRA ticketing platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "AUTHENTICATION",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"email\": \"user@example.com\", \"password\": \"Pass123\", \"firstName\": \"John\", \"lastName\": \"Doe\", \"phone\": \"+1234567890\", \"role\": \"GUEST\"}"},
+            "url": {"raw": "{{BASE_URL}}/api/auth/register", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "register"]}
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"email\": \"admin@eventticketing.com\", \"password\": \"admin123\"}"},
+            "url": {"raw": "{{BASE_URL}}/api/auth/login", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "login"]}
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/auth/logout?userId={{USER_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "logout"], "query": [{"key": "userId", "value": "{{USER_ID}}"}]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "USER SERVICE (8081)",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/users?page=0&size=20", "host": ["{{BASE_URL}}"], "path": ["api", "users"], "query": [{"key": "page", "value": "0"}, {"key": "size", "value": "20"}]}
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/users/{{USER_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "users", "{{USER_ID}}"]}
+          }
+        },
+        {
+          "name": "Get User by Email",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/users/email/admin@eventticketing.com", "host": ["{{BASE_URL}}"], "path": ["api", "users", "email", "admin@eventticketing.com"]}
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"email\": \"newuser@example.com\", \"firstName\": \"Jane\", \"lastName\": \"Smith\", \"phone\": \"+0987654321\", \"role\": \"GUEST\"}"},
+            "url": {"raw": "{{BASE_URL}}/api/users", "host": ["{{BASE_URL}}"], "path": ["api", "users"]}
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"firstName\": \"John\", \"lastName\": \"Updated\", \"phone\": \"+1234567890\"}"},
+            "url": {"raw": "{{BASE_URL}}/api/users/{{USER_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "users", "{{USER_ID}}"]}
+          }
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/users/{{USER_ID}}/deactivate", "host": ["{{BASE_URL}}"], "path": ["api", "users", "{{USER_ID}}", "deactivate"]}
+          }
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/users/{{USER_ID}}/activate", "host": ["{{BASE_URL}}"], "path": ["api", "users", "{{USER_ID}}", "activate"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "ORGANIZATION SERVICE (8082)",
+      "item": [
+        {
+          "name": "Create Organization",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"name\": \"Tech Corp\", \"email\": \"org@techcorp.com\", \"phone\": \"+1234567890\", \"address\": \"123 Main St\", \"city\": \"San Francisco\", \"country\": \"USA\"}"},
+            "url": {"raw": "{{BASE_URL}}/api/organizations", "host": ["{{BASE_URL}}"], "path": ["api", "organizations"]}
+          }
+        },
+        {
+          "name": "Get All Organizations",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/organizations?page=0&size=20", "host": ["{{BASE_URL}}"], "path": ["api", "organizations"], "query": [{"key": "page", "value": "0"}, {"key": "size", "value": "20"}]}
+          }
+        },
+        {
+          "name": "Get Organization by ID",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/organizations/{{ORG_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "organizations", "{{ORG_ID}}"]}
+          }
+        },
+        {
+          "name": "Update Organization",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"name\": \"Tech Corp Updated\", \"email\": \"org@techcorp.com\", \"phone\": \"+1234567890\"}"},
+            "url": {"raw": "{{BASE_URL}}/api/organizations/{{ORG_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "organizations", "{{ORG_ID}}"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "EVENT SERVICE (8083)",
+      "item": [
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"organizationId\": \"{{ORG_ID}}\", \"name\": \"Tech Conference 2026\", \"slug\": \"tech-conference-2026\", \"description\": \"A major technology conference\", \"category\": \"TECHNOLOGY\", \"startDate\": \"2026-06-01T09:00:00\", \"endDate\": \"2026-06-03T18:00:00\", \"capacity\": 5000}"},
+            "url": {"raw": "{{BASE_URL}}/api/events", "host": ["{{BASE_URL}}"], "path": ["api", "events"]}
+          }
+        },
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{BASE_URL}}/api/events?page=0&size=20", "host": ["{{BASE_URL}}"], "path": ["api", "events"], "query": [{"key": "page", "value": "0"}, {"key": "size", "value": "20"}]}
+          }
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{BASE_URL}}/api/events/{{EVENT_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "events", "{{EVENT_ID}}"]}
+          }
+        },
+        {
+          "name": "Get Upcoming Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{BASE_URL}}/api/events/upcoming?page=0&size=20", "host": ["{{BASE_URL}}"], "path": ["api", "events", "upcoming"], "query": [{"key": "page", "value": "0"}, {"key": "size", "value": "20"}]}
+          }
+        },
+        {
+          "name": "Search Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{BASE_URL}}/api/events/search?query=tech&page=0&size=20", "host": ["{{BASE_URL}}"], "path": ["api", "events", "search"], "query": [{"key": "query", "value": "tech"}, {"key": "page", "value": "0"}, {"key": "size", "value": "20"}]}
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"organizationId\": \"{{ORG_ID}}\", \"name\": \"Tech Conference 2026 Updated\", \"slug\": \"tech-conference-2026\", \"description\": \"Updated description\", \"category\": \"TECHNOLOGY\", \"startDate\": \"2026-06-01T09:00:00\", \"endDate\": \"2026-06-03T18:00:00\", \"capacity\": 6000}"},
+            "url": {"raw": "{{BASE_URL}}/api/events/{{EVENT_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "events", "{{EVENT_ID}}"]}
+          }
+        },
+        {
+          "name": "Publish Event",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/events/{{EVENT_ID}}/publish", "host": ["{{BASE_URL}}"], "path": ["api", "events", "{{EVENT_ID}}", "publish"]}
+          }
+        },
+        {
+          "name": "Cancel Event",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/events/{{EVENT_ID}}/cancel", "host": ["{{BASE_URL}}"], "path": ["api", "events", "{{EVENT_ID}}", "cancel"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "ORDER SERVICE (8084)",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"userId\": \"{{USER_ID}}\", \"eventId\": \"{{EVENT_ID}}\", \"quantity\": 2, \"totalPrice\": 100.00}"},
+            "url": {"raw": "{{BASE_URL}}/api/orders", "host": ["{{BASE_URL}}"], "path": ["api", "orders"]}
+          }
+        },
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/orders?page=0&size=20", "host": ["{{BASE_URL}}"], "path": ["api", "orders"], "query": [{"key": "page", "value": "0"}, {"key": "size", "value": "20"}]}
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/orders/{{ORDER_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "orders", "{{ORDER_ID}}"]}
+          }
+        },
+        {
+          "name": "Get User Orders",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/orders/user/{{USER_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "orders", "user", "{{USER_ID}}"]}
+          }
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/orders/{{ORDER_ID}}/cancel", "host": ["{{BASE_URL}}"], "path": ["api", "orders", "{{ORDER_ID}}", "cancel"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "TICKET SERVICE (8085)",
+      "item": [
+        {
+          "name": "Generate Tickets",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"orderId\": \"{{ORDER_ID}}\"}"},
+            "url": {"raw": "{{BASE_URL}}/api/tickets/generate", "host": ["{{BASE_URL}}"], "path": ["api", "tickets", "generate"]}
+          }
+        },
+        {
+          "name": "Get Ticket by ID",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/tickets/{{TICKET_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "tickets", "{{TICKET_ID}}"]}
+          }
+        },
+        {
+          "name": "Get Order Tickets",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/tickets/order/{{ORDER_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "tickets", "order", "{{ORDER_ID}}"]}
+          }
+        },
+        {
+          "name": "Get User Tickets",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/tickets/user/{{USER_ID}}?page=0&size=20", "host": ["{{BASE_URL}}"], "path": ["api", "tickets", "user", "{{USER_ID}}"], "query": [{"key": "page", "value": "0"}, {"key": "size", "value": "20"}]}
+          }
+        },
+        {
+          "name": "Validate Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/tickets/validate?qrCode=QR123456&scannerId={{SCANNER_ID}}&scannerName=MainGate", "host": ["{{BASE_URL}}"], "path": ["api", "tickets", "validate"], "query": [{"key": "qrCode", "value": "QR123456"}, {"key": "scannerId", "value": "{{SCANNER_ID}}"}, {"key": "scannerName", "value": "MainGate"}]}
+          }
+        },
+        {
+          "name": "Transfer Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"recipientEmail\": \"friend@example.com\", \"message\": \"Enjoy the event!\"}"},
+            "url": {"raw": "{{BASE_URL}}/api/tickets/{{TICKET_ID}}/transfer", "host": ["{{BASE_URL}}"], "path": ["api", "tickets", "{{TICKET_ID}}", "transfer"]}
+          }
+        },
+        {
+          "name": "Cancel Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/tickets/{{TICKET_ID}}/cancel", "host": ["{{BASE_URL}}"], "path": ["api", "tickets", "{{TICKET_ID}}", "cancel"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "PAYMENT SERVICE (8086)",
+      "item": [
+        {
+          "name": "Process Payment",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"orderId\": \"{{ORDER_ID}}\", \"amount\": 100.00, \"currency\": \"USD\", \"paymentMethod\": \"CARD\"}"},
+            "url": {"raw": "{{BASE_URL}}/api/payments", "host": ["{{BASE_URL}}"], "path": ["api", "payments"]}
+          }
+        },
+        {
+          "name": "Get Payment",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/payments/{{PAYMENT_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "payments", "{{PAYMENT_ID}}"]}
+          }
+        },
+        {
+          "name": "Get Order Payments",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/payments/order/{{ORDER_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "payments", "order", "{{ORDER_ID}}"]}
+          }
+        },
+        {
+          "name": "Refund Payment",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "body": {"mode": "raw", "raw": "{\"paymentId\": \"{{PAYMENT_ID}}\", \"reason\": \"Customer requested\"}"},
+            "url": {"raw": "{{BASE_URL}}/api/payments/{{PAYMENT_ID}}/refund", "host": ["{{BASE_URL}}"], "path": ["api", "payments", "{{PAYMENT_ID}}", "refund"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "ANALYTICS SERVICE (8088)",
+      "item": [
+        {
+          "name": "Get Event Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/analytics/events/{{EVENT_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "analytics", "events", "{{EVENT_ID}}"]}
+          }
+        },
+        {
+          "name": "Get Sales Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/analytics/sales?startDate=2026-01-01&endDate=2026-12-31", "host": ["{{BASE_URL}}"], "path": ["api", "analytics", "sales"], "query": [{"key": "startDate", "value": "2026-01-01"}, {"key": "endDate", "value": "2026-12-31"}]}
+          }
+        },
+        {
+          "name": "Get Ticket Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}"}],
+            "url": {"raw": "{{BASE_URL}}/api/analytics/tickets?page=0&size=20", "host": ["{{BASE_URL}}"], "path": ["api", "analytics", "tickets"], "query": [{"key": "page", "value": "0"}, {"key": "size", "value": "20"}]}
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {"key": "BASE_URL", "value": "http://localhost:8080"},
+    {"key": "ACCESS_TOKEN", "value": ""},
+    {"key": "USER_ID", "value": ""},
+    {"key": "ORG_ID", "value": ""},
+    {"key": "EVENT_ID", "value": ""},
+    {"key": "ORDER_ID", "value": ""},
+    {"key": "TICKET_ID", "value": ""},
+    {"key": "PAYMENT_ID", "value": ""},
+    {"key": "SCANNER_ID", "value": ""}
+  ]
+}

@@ -57,18 +57,6 @@ Thumbs.db
 Desktop.ini
 
 # ========================================
-# Flutter
-# ========================================
-mobile/event_ticketing_app/.dart_tool/
-mobile/event_ticketing_app/.flutter-plugins
-mobile/event_ticketing_app/.flutter-plugins-dependencies
-mobile/event_ticketing_app/.packages
-mobile/event_ticketing_app/build/
-mobile/event_ticketing_app/.pub-cache/
-mobile/event_ticketing_app/.pub/
-mobile/event_ticketing_app/pubspec.lock
-
-# ========================================
 # Temporary Files
 # ========================================
 *.tmp
@@ -76,23 +64,11 @@ mobile/event_ticketing_app/pubspec.lock
 *.swp
 *.swo
 *~
-
 # ========================================
 # Uploads & Generated Files
 # ========================================
 uploads/
 generated/
-
-
-
 /scripts/
-/mobile/
 /postman/
 /jenkins/
-/services/analytics-service/
-
-
-
-
-
-

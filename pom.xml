@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
@@ -37,6 +37,8 @@
         <module>services/payment-service</module>
         <module>services/notification-service</module>
         <module>services/analytics-service</module>
+        <module>services/organization-service</module>
+        <module>services/ticket-service</module>
     </modules>
 
     <properties>

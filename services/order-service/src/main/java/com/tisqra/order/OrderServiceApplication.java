@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * Order Service Application
  * Manages orders, shopping carts, and order processing
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.tisqra")
 @EnableDiscoveryClient
 @EnableJpaAuditing
 @EnableScheduling

@@ -1,10 +1,13 @@
 package com.tisqra.order.application.service;
 
+import com.tisqra.common.ApiResponse;
 import com.tisqra.common.enums.OrderStatus;
 import com.tisqra.common.exception.BusinessException;
 import com.tisqra.common.exception.ResourceNotFoundException;
 import com.tisqra.kafka.config.KafkaTopics;
 import com.tisqra.kafka.events.OrderCreatedEvent;
+import com.tisqra.kafka.events.PaymentCompletedEvent;
+import com.tisqra.kafka.events.PaymentFailedEvent;
 import com.tisqra.order.application.dto.CreateOrderRequest;
 import com.tisqra.order.application.dto.OrderDTO;
 import com.tisqra.order.application.mapper.OrderMapper;
@@ -16,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -231,7 +235,13 @@ public class OrderService {
     private Map<String, Object> fetchTicketCategoryDetails(UUID categoryId) {
         try {
             String url = "http://event-service/api/ticket-categories/" + categoryId;
-            return restTemplate.getForObject(url, Map.class);
+            ApiResponse<?> response = restTemplate.getForObject(url, ApiResponse.class);
+            if (response == null || response.getData() == null) {
+                throw new BusinessException("Missing ticket category details");
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) response.getData();
+            return data;
         } catch (Exception e) {
             log.error("Failed to fetch ticket category details", e);
             throw new BusinessException("Failed to fetch ticket details");
@@ -241,7 +251,7 @@ public class OrderService {
     private void reserveTickets(UUID categoryId, Integer quantity) {
         try {
             String url = "http://event-service/api/ticket-categories/" + categoryId + "/reserve?quantity=" + quantity;
-            restTemplate.postForObject(url, null, Void.class);
+            restTemplate.postForObject(url, null, ApiResponse.class);
         } catch (Exception e) {
             log.error("Failed to reserve tickets", e);
             throw new BusinessException("Failed to reserve tickets. They may be sold out.");
@@ -251,7 +261,7 @@ public class OrderService {
     private void releaseTickets(UUID categoryId, Integer quantity) {
         try {
             String url = "http://event-service/api/ticket-categories/" + categoryId + "/release?quantity=" + quantity;
-            restTemplate.postForObject(url, null, Void.class);
+            restTemplate.postForObject(url, null, ApiResponse.class);
         } catch (Exception e) {
             log.error("Failed to release tickets", e);
         }
@@ -260,7 +270,12 @@ public class OrderService {
     private BigDecimal validateAndCalculatePromoDiscount(String code, UUID eventId, BigDecimal amount) {
         try {
             String url = "http://event-service/api/promo-codes/validate?code=" + code + "&eventId=" + eventId;
-            Map<String, Object> promoData = restTemplate.getForObject(url, Map.class);
+            ApiResponse<?> response = restTemplate.getForObject(url, ApiResponse.class);
+            if (response == null || response.getData() == null) {
+                throw new BusinessException("Invalid promo code");
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> promoData = (Map<String, Object>) response.getData();
             
             String discountType = promoData.get("discountType").toString();
             BigDecimal discountValue = new BigDecimal(promoData.get("discountValue").toString());
@@ -274,5 +289,19 @@ public class OrderService {
             log.error("Failed to validate promo code", e);
             throw new BusinessException("Invalid promo code");
         }
+    }
+
+    @KafkaListener(topics = KafkaTopics.PAYMENT_COMPLETED, groupId = "order-service")
+    @Transactional
+    public void handlePaymentCompleted(PaymentCompletedEvent event) {
+        log.info("Received PAYMENT_COMPLETED for order: {}", event.getOrderId());
+        confirmOrder(event.getOrderId());
+    }
+
+    @KafkaListener(topics = KafkaTopics.PAYMENT_FAILED, groupId = "order-service")
+    @Transactional
+    public void handlePaymentFailed(PaymentFailedEvent event) {
+        log.info("Received PAYMENT_FAILED for order: {}", event.getOrderId());
+        cancelOrder(event.getOrderId());
     }
 }

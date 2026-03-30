@@ -1,6 +1,7 @@
 package com.tisqra.user.infrastructure.exception;
 
-import com.tisqra.common.exception.ApiError;
+import com.tisqra.common.ApiResponse;
+import com.tisqra.common.ErrorResponse;
 import com.tisqra.common.exception.BusinessException;
 import com.tisqra.common.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,39 +26,43 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiError> handleResourceNotFoundException(
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(
             ResourceNotFoundException ex, HttpServletRequest request) {
         log.error("Resource not found: {}", ex.getMessage());
 
-        ApiError error = ApiError.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.NOT_FOUND.value())
-            .error("Not Found")
+        ErrorResponse error = ErrorResponse.builder()
+            .code("NOT_FOUND")
             .message(ex.getMessage())
-            .path(request.getRequestURI())
+            .details(null)
             .build();
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiResponse.<Void>builder()
+                .success(false)
+                .error(error)
+                .build());
     }
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiError> handleBusinessException(
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(
             BusinessException ex, HttpServletRequest request) {
         log.error("Business exception: {}", ex.getMessage());
 
-        ApiError error = ApiError.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.BAD_REQUEST.value())
-            .error("Business Rule Violation")
+        ErrorResponse error = ErrorResponse.builder()
+            .code("BUSINESS_RULE_VIOLATION")
             .message(ex.getMessage())
-            .path(request.getRequestURI())
+            .details(null)
             .build();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.<Void>builder()
+                .success(false)
+                .error(error)
+                .build());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidationException(
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
         log.error("Validation error: {}", ex.getMessage());
 
@@ -66,31 +71,34 @@ public class GlobalExceptionHandler {
             details.add(error.getField() + ": " + error.getDefaultMessage());
         }
 
-        ApiError error = ApiError.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.BAD_REQUEST.value())
-            .error("Validation Failed")
+        ErrorResponse error = ErrorResponse.builder()
+            .code("VALIDATION_FAILED")
             .message("Input validation failed")
-            .path(request.getRequestURI())
             .details(details)
             .build();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.<Void>builder()
+                .success(false)
+                .error(error)
+                .build());
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleGenericException(
+    public ResponseEntity<ApiResponse<Void>> handleGenericException(
             Exception ex, HttpServletRequest request) {
         log.error("Unexpected error: ", ex);
 
-        ApiError error = ApiError.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-            .error("Internal Server Error")
+        ErrorResponse error = ErrorResponse.builder()
+            .code("INTERNAL_SERVER_ERROR")
             .message("An unexpected error occurred")
-            .path(request.getRequestURI())
+            .details(null)
             .build();
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ApiResponse.<Void>builder()
+                .success(false)
+                .error(error)
+                .build());
     }
 }

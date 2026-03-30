@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * Analytics Service Application
  * Manages sales analytics, metrics, and dashboards
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.tisqra")
 @EnableDiscoveryClient
 @EnableJpaAuditing
 @EnableScheduling

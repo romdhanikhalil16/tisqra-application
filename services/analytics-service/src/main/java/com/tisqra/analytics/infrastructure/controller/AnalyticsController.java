@@ -1,5 +1,6 @@
 package com.tisqra.analytics.infrastructure.controller;
 
+import com.tisqra.common.ApiResponse;
 import com.tisqra.analytics.application.dto.DashboardDTO;
 import com.tisqra.analytics.application.dto.EventSalesDTO;
 import com.tisqra.analytics.application.service.AnalyticsService;
@@ -31,22 +32,22 @@ public class AnalyticsController {
     @GetMapping("/dashboard/{organizationId}")
     @Operation(summary = "Get organization dashboard")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
-    public ResponseEntity<DashboardDTO> getDashboard(
+    public ResponseEntity<ApiResponse<DashboardDTO>> getDashboard(
             @PathVariable UUID organizationId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         DashboardDTO dashboard = analyticsService.getDashboard(organizationId, startDate, endDate);
-        return ResponseEntity.ok(dashboard);
+        return ResponseEntity.ok(ApiResponse.<DashboardDTO>builder().success(true).data(dashboard).build());
     }
 
     @GetMapping("/event/{eventId}/sales")
     @Operation(summary = "Get event sales report")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
-    public ResponseEntity<List<EventSalesDTO>> getEventSalesReport(
+    public ResponseEntity<ApiResponse<List<EventSalesDTO>>> getEventSalesReport(
             @PathVariable UUID eventId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         List<EventSalesDTO> report = analyticsService.getEventSalesReport(eventId, startDate, endDate);
-        return ResponseEntity.ok(report);
+        return ResponseEntity.ok(ApiResponse.<List<EventSalesDTO>>builder().success(true).data(report).build());
     }
 }

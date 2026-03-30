@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  * Event Service Application
  * Manages events, ticket categories, schedules, and promo codes
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.tisqra")
 @EnableDiscoveryClient
 @EnableJpaAuditing
 public class EventServiceApplication {

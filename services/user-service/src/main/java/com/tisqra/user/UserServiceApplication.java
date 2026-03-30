@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  * User Service Application
  * Manages user authentication, authorization and user profiles
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.tisqra")
 @EnableDiscoveryClient
 @EnableJpaAuditing
 public class UserServiceApplication {

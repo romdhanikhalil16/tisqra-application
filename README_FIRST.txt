@@ -1,4 +1,4 @@
-﻿╔════════════════════════════════════════════════════════════════╗
+╔════════════════════════════════════════════════════════════════╗
 ║                                                                ║
 ║             WELCOME TO TISQRA PLATFORM v2.0.0                  ║
 ║                                                                ║
@@ -95,13 +95,13 @@ Step 3: Test APIs
   ─────────────────────────────────────────────────────────
   api-gateway          8080    Main API entry point
   user-service         8081    Authentication & Users
-  event-service        8082    Event management
-  order-service        8083    Order processing
-  payment-service      8084    Payment handling
+  event-service        8083    Event management
+  order-service        8084    Order processing
   ticket-service       8085    Ticket generation
-  organization-service 8086    Organizations
-  analytics-service    8087    Analytics & reporting
-  notification-service 8088    Email/SMS notifications
+  payment-service      8086    Payment handling
+  notification-service 8087    Email/SMS notifications
+  analytics-service    8088    Analytics & reporting
+  organization-service 8089    Organizations
 
 ═══════════════════════════════════════════════════════════════
 

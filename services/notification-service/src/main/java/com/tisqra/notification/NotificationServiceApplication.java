@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * Notification Service Application
  * Manages email (Brevo SMTP) and push notifications (FCM)
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.tisqra")
 @EnableDiscoveryClient
 @EnableJpaAuditing
 @EnableAsync

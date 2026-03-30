@@ -1,0 +1,22 @@
+# Jenkins data
+jenkins_home/
+.jenkins/
+
+# Secrets and credentials
+secrets/
+*.key
+*.pem
+*.p12
+*.jks
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Local environment
+.env.local

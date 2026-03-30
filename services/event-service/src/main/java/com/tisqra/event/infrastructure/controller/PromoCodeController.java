@@ -1,5 +1,6 @@
 package com.tisqra.event.infrastructure.controller;
 
+import com.tisqra.common.ApiResponse;
 import com.tisqra.event.application.dto.PromoCodeDTO;
 import com.tisqra.event.application.service.PromoCodeService;
 import com.tisqra.event.domain.model.DiscountType;
@@ -32,7 +33,7 @@ public class PromoCodeController {
     @PostMapping
     @Operation(summary = "Create promo code")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
-    public ResponseEntity<PromoCodeDTO> createPromoCode(
+    public ResponseEntity<ApiResponse<PromoCodeDTO>> createPromoCode(
             @RequestParam UUID eventId,
             @RequestParam String code,
             @RequestParam DiscountType type,
@@ -42,31 +43,32 @@ public class PromoCodeController {
             @RequestParam LocalDateTime validUntil) {
         PromoCodeDTO promoCode = promoCodeService.createPromoCode(
             eventId, code, type, value, maxUses, validFrom, validUntil);
-        return ResponseEntity.status(HttpStatus.CREATED).body(promoCode);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.<PromoCodeDTO>builder().success(true).data(promoCode).build());
     }
 
     @GetMapping("/validate")
     @Operation(summary = "Validate promo code")
-    public ResponseEntity<PromoCodeDTO> validatePromoCode(
+    public ResponseEntity<ApiResponse<PromoCodeDTO>> validatePromoCode(
             @RequestParam String code,
             @RequestParam UUID eventId) {
         PromoCodeDTO promoCode = promoCodeService.validatePromoCode(code, eventId);
-        return ResponseEntity.ok(promoCode);
+        return ResponseEntity.ok(ApiResponse.<PromoCodeDTO>builder().success(true).data(promoCode).build());
     }
 
     @GetMapping("/event/{eventId}")
     @Operation(summary = "Get event promo codes")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
-    public ResponseEntity<List<PromoCodeDTO>> getEventPromoCodes(@PathVariable UUID eventId) {
+    public ResponseEntity<ApiResponse<List<PromoCodeDTO>>> getEventPromoCodes(@PathVariable UUID eventId) {
         List<PromoCodeDTO> promoCodes = promoCodeService.getEventPromoCodes(eventId);
-        return ResponseEntity.ok(promoCodes);
+        return ResponseEntity.ok(ApiResponse.<List<PromoCodeDTO>>builder().success(true).data(promoCodes).build());
     }
 
     @PostMapping("/{id}/deactivate")
     @Operation(summary = "Deactivate promo code")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
-    public ResponseEntity<Void> deactivatePromoCode(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> deactivatePromoCode(@PathVariable UUID id) {
         promoCodeService.deactivatePromoCode(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
     }
 }

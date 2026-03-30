@@ -1,5 +1,6 @@
 package com.tisqra.payment.application.service;
 
+import com.tisqra.common.ApiResponse;
 import com.tisqra.common.enums.PaymentStatus;
 import com.tisqra.common.exception.BusinessException;
 import com.tisqra.common.exception.ResourceNotFoundException;
@@ -85,9 +86,6 @@ public class PaymentService {
             // Payment succeeded
             payment.complete(result.getTransactionId());
             payment = paymentRepository.save(payment);
-
-            // Confirm order
-            confirmOrder(request.getOrderId());
 
             // Publish success event
             PaymentCompletedEvent event = PaymentCompletedEvent.builder()
@@ -206,26 +204,23 @@ public class PaymentService {
     private Map<String, Object> fetchOrderDetails(UUID orderId) {
         try {
             String url = "http://order-service/api/orders/" + orderId;
-            return restTemplate.getForObject(url, Map.class);
+            ApiResponse<?> response = restTemplate.getForObject(url, ApiResponse.class);
+            if (response == null || response.getData() == null) {
+                throw new BusinessException("Missing order details");
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) response.getData();
+            return data;
         } catch (Exception e) {
             log.error("Failed to fetch order details", e);
             throw new BusinessException("Failed to fetch order details");
         }
     }
 
-    private void confirmOrder(UUID orderId) {
-        try {
-            String url = "http://order-service/api/orders/" + orderId + "/confirm";
-            restTemplate.postForObject(url, null, Void.class);
-        } catch (Exception e) {
-            log.error("Failed to confirm order", e);
-        }
-    }
-
     private void refundOrder(UUID orderId) {
         try {
             String url = "http://order-service/api/orders/" + orderId + "/refund";
-            restTemplate.postForObject(url, null, Void.class);
+            restTemplate.postForObject(url, null, ApiResponse.class);
         } catch (Exception e) {
             log.error("Failed to refund order", e);
         }

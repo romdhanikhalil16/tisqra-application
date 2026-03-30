@@ -14,6 +14,8 @@ public class RestTemplateConfig {
     @Bean
     @LoadBalanced
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getInterceptors().add(new BearerTokenRestTemplateInterceptor());
+        return restTemplate;
     }
 }

@@ -1,4 +1,4 @@
-﻿version: '3.8'
+version: '3.8'
 
 services:
   # ========================================
@@ -226,27 +226,6 @@ services:
     networks:
       - eventticket-network
 
-  organization-service:
-    build:
-      context: .
-      dockerfile: ./services/organization-service/Dockerfile
-    container_name: tisqra-organization
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
-    ports:
-      - "8082:8082"
-    depends_on:
-      - postgres
-      - redis
-      - kafka
-      - discovery-service
-    networks:
-      - eventticket-network
-
   event-service:
     build:
       context: .
@@ -281,27 +260,6 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
     ports:
       - "8084:8084"
-    depends_on:
-      - postgres
-      - redis
-      - kafka
-      - discovery-service
-    networks:
-      - eventticket-network
-
-  ticket-service:
-    build:
-      context: .
-      dockerfile: ./services/ticket-service/Dockerfile
-    container_name: tisqra-ticket
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
-    ports:
-      - "8085:8085"
     depends_on:
       - postgres
       - redis
@@ -371,6 +329,56 @@ services:
       - redis
       - kafka
       - discovery-service
+    networks:
+      - eventticket-network
+
+  # ========================================
+  # Organization Service
+  # ========================================
+  organization-service:
+    build:
+      context: .
+      dockerfile: ./services/organization-service/Dockerfile
+    container_name: tisqra-organization
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
+    ports:
+      - "8089:8086"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - discovery-service
+      - keycloak
+    networks:
+      - eventticket-network
+
+  # ========================================
+  # Ticket Service
+  # ========================================
+  ticket-service:
+    build:
+      context: .
+      dockerfile: ./services/ticket-service/Dockerfile
+    container_name: tisqra-ticket
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
+    ports:
+      - "8085:8085"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - discovery-service
+      - keycloak
     networks:
       - eventticket-network
 

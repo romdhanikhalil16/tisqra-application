@@ -1,0 +1,15 @@
+package com.tisqra.common.enums;
+
+public enum NotificationType {
+    ACCOUNT_VERIFICATION,
+    PASSWORD_RESET,
+    TICKET_PURCHASE,
+    TICKET_TRANSFER,
+    PAYMENT_RECEIPT,
+    EVENT_REMINDER,
+    TICKET_VALIDATION,
+    PAYMENT_STATUS,
+    ORDER_CONFIRMATION,
+    REFUND_CONFIRMATION
+}
+

@@ -1,5 +1,6 @@
 package com.tisqra.user.infrastructure.controller;
 
+import com.tisqra.common.ApiResponse;
 import com.tisqra.user.application.dto.*;
 import com.tisqra.user.application.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,43 +27,44 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new user (Gmail signup)")
-    public ResponseEntity<UserDTO> register(@Valid @RequestBody RegisterUserRequest request) {
+    public ResponseEntity<ApiResponse<UserDTO>> register(@Valid @RequestBody RegisterUserRequest request) {
         UserDTO user = authenticationService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.<UserDTO>builder().success(true).data(user).build());
     }
 
     @PostMapping("/login")
     @Operation(summary = "Login with email and password")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = authenticationService.login(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.<LoginResponse>builder().success(true).data(response).build());
     }
 
     @PostMapping("/logout")
     @Operation(summary = "Logout user")
-    public ResponseEntity<Void> logout(@RequestParam UUID userId) {
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestParam UUID userId) {
         authenticationService.logout(userId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
     }
 
     @PostMapping("/password/reset-request")
     @Operation(summary = "Request password reset")
-    public ResponseEntity<Void> requestPasswordReset(@RequestParam String email) {
+    public ResponseEntity<ApiResponse<Void>> requestPasswordReset(@RequestParam String email) {
         authenticationService.requestPasswordReset(email);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
     }
 
     @PostMapping("/password/reset")
     @Operation(summary = "Reset password with token")
-    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authenticationService.resetPassword(request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
     }
 
     @PostMapping("/email/verify")
     @Operation(summary = "Verify email address")
-    public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestParam String token) {
         authenticationService.verifyEmail(token);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
     }
 }

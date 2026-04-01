@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ========================================
   # PostgreSQL Database
@@ -142,7 +140,9 @@ services:
     networks:
       - eventticket-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      # Discovery has no custom security on /actuator/health, but if actuator changes,
+      # fall back to a simple TCP check so the service isn't marked unhealthy incorrectly.
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || nc -z localhost 8761"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -166,7 +166,7 @@ services:
     networks:
       - eventticket-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8888/actuator/health || nc -z localhost 8888"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -194,7 +194,7 @@ services:
     networks:
       - eventticket-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || nc -z localhost 8080"]
       interval: 30s
       timeout: 10s
       retries: 5

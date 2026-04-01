@@ -67,8 +67,5 @@ Desktop.ini
 # ========================================
 # Uploads & Generated Files
 # ========================================
-uploads/
-generated/
-/scripts/
 /postman/
 /mobile/

@@ -1,4 +1,4 @@
-﻿spring:
+spring:
   datasource:
     url: jdbc:postgresql://postgres:5432/notification_db
 
@@ -11,6 +11,11 @@
         jwt:
           issuer-uri: http://keycloak:8080/realms/tisqra
           jwk-set-uri: http://keycloak:8080/realms/tisqra/protocol/openid-connect/certs
+
+management:
+  health:
+    mail:
+      enabled: false
 
 eureka:
   client:

@@ -1,13 +1,13 @@
 package com.tisqra.event.domain.model;
 
 import com.tisqra.common.exception.BusinessException;
-import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -77,8 +77,8 @@ public class TicketCategory {
     @Column(length = 7)
     private String color;
 
-    @Type(ListArrayType.class)
-    @Column(columnDefinition = "text[]")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     @Builder.Default
     private List<String> features = new ArrayList<>();
 

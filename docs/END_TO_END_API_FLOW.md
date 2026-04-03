@@ -1,10 +1,11 @@
 ## Tisqra Platform – End‑to‑End API Guide
 
-This guide shows **how to run the stack**, and provides **end‑to‑end API flows** with example payloads from **signup / login** to **orders, payments, tickets, notifications**, with **roles** and **call order**.
+This guide shows **how to run the stack**, and provides **end‑to‑end API flows** with example payloads from **signup / login** to **orders, payments, tickets, notifications**, with **roles* * and **call order**.
 
 It assumes:
 - Backend running via `docker compose` (Keycloak, API gateway, services, DB, Kafka, Redis).
-- You call APIs through the **API Gateway**: `http://localhost:8080`.
+- You call APIs through the **API Gateway**:
+ `http://localhost:8080`.
 
 ---
 

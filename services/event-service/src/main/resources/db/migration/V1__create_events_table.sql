@@ -2,7 +2,6 @@
 CREATE TABLE events (
     id UUID PRIMARY KEY,
     organization_id UUID NOT NULL,
-    name VARCHAR(300) NOT NULL,
     slug VARCHAR(150) NOT NULL UNIQUE,
     description TEXT,
     category VARCHAR(50) NOT NULL,

@@ -21,3 +21,7 @@ eureka:
   instance:
     hostname: organization-service
 
+tisqra:
+  flyway:
+    repair-on-startup: true
+

@@ -86,9 +86,10 @@ services:
     networks:
       - eventticket-network
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      # The CLI tool can be slow on busy machines; give it more time.
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 >/dev/null 2>&1"]
       interval: 30s
-      timeout: 10s
+      timeout: 30s
       retries: 5
 
   # ========================================
@@ -157,7 +158,8 @@ services:
     container_name: tisqra-config
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      # Config server must include 'native' (otherwise it defaults to git backend and requires a git URI).
+      SPRING_PROFILES_ACTIVE: docker,native
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
     ports:
       - "8888:8888"

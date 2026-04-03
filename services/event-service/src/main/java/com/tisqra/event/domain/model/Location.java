@@ -2,6 +2,7 @@ package com.tisqra.event.domain.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +19,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Location {
 
-    @Column(nullable = false, length = 200)
+    /**
+     * Optional display label (e.g., venue name). Not persisted to avoid clashing with Event.name
+     * and to keep the DB schema stable.
+     */
+    @Transient
     private String name;
 
     @Column(nullable = false, length = 500)

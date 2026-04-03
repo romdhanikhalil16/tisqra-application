@@ -21,3 +21,7 @@ eureka:
   instance:
     hostname: ticket-service
 
+tisqra:
+  flyway:
+    repair-on-startup: true
+

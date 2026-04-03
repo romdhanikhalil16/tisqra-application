@@ -43,7 +43,7 @@ public class Ticket extends BaseEntity {
     private String qrCode;
 
     @Lob
-    @Column(name = "qr_code_image")
+    @Column(name = "qr_code_image", columnDefinition = "BYTEA")
     private byte[] qrCodeImage;
 
     @Column(length = 200)

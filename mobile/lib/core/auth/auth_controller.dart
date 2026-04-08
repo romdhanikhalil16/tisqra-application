@@ -158,6 +158,7 @@ class AuthController extends StateNotifier<AuthState> {
     final apiResponse = await _apiClient.postApiResponseDynamic(
       '/api/auth/register',
       body: {
+        'username': email,
         'email': email,
         'password': password,
         'firstName': firstName,

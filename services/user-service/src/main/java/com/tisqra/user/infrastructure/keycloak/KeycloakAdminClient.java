@@ -33,12 +33,18 @@ public class KeycloakAdminClient {
     @Value("${keycloak.client-secret:}")
     private String clientSecret;
 
+    @Value("${keycloak.admin.username:admin}")
+    private String adminUsername;
+
+    @Value("${keycloak.admin.password:admin}")
+    private String adminPassword;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     /**
      * Create a new user in Keycloak
      */
-    public String createUser(String email, String password, String firstName, String lastName, UserRole role) {
+    public String createUser(String username, String email, String password, String firstName, String lastName, UserRole role) {
         log.info("Creating user in Keycloak: {}", email);
 
         try {
@@ -47,7 +53,7 @@ public class KeycloakAdminClient {
 
             // Prepare user data
             Map<String, Object> userData = new HashMap<>();
-            userData.put("username", email);
+            userData.put("username", username);
             userData.put("email", email);
             userData.put("firstName", firstName);
             userData.put("lastName", lastName);
@@ -165,8 +171,32 @@ public class KeycloakAdminClient {
      * Get admin access token
      */
     private String getAdminToken() {
-        // In production, get admin token from Keycloak
-        // For now, return mock token
-        return "mock-admin-token";
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("grant_type", "password");
+            body.add("client_id", "admin-cli");
+            body.add("username", adminUsername);
+            body.add("password", adminPassword);
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+
+            String url = keycloakServerUrl + "/realms/master/protocol/openid-connect/token";
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+            Map<String, Object> tokenData = response.getBody();
+
+            if (tokenData == null || tokenData.get("access_token") == null) {
+                throw new BusinessException("Keycloak admin token response missing access_token");
+            }
+
+            return tokenData.get("access_token").toString();
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to get Keycloak admin token", e);
+            throw new BusinessException("Failed to get Keycloak admin token: " + e.getMessage());
+        }
     }
 }

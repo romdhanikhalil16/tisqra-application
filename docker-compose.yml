@@ -99,7 +99,7 @@ services:
     image: quay.io/keycloak/keycloak:23.0
     container_name: tisqra-keycloak
     restart: unless-stopped
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
@@ -217,6 +217,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      # Allow user-service to manage users in Keycloak
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
     ports:
       - "8081:8081"
     depends_on:

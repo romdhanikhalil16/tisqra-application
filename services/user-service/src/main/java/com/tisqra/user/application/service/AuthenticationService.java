@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -35,8 +36,14 @@ public class AuthenticationService {
             throw new BusinessException("User with email " + request.getEmail() + " already exists");
         }
 
+        final String username = Optional.ofNullable(request.getUsername())
+            .map(String::trim)
+            .filter(u -> !u.isEmpty())
+            .orElse(request.getEmail());
+
         // Create user in Keycloak
         String keycloakId = keycloakAdminClient.createUser(
+            username,
             request.getEmail(),
             request.getPassword(),
             request.getFirstName(),

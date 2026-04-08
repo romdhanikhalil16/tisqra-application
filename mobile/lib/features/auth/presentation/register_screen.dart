@@ -13,7 +13,8 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
-  final _name = TextEditingController();
+  final _firstName = TextEditingController();
+  final _lastName = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
@@ -24,7 +25,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   void dispose() {
-    _name.dispose();
+    _firstName.dispose();
+    _lastName.dispose();
     _email.dispose();
     _password.dispose();
     _confirm.dispose();
@@ -49,13 +51,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _onRegister() async {
-    final name = _name.text.trim();
+    final firstName = _firstName.text.trim();
+    final lastName = _lastName.text.trim();
     final email = _email.text.trim();
     final password = _password.text;
     final confirm = _confirm.text;
 
     String? error;
-    if (name.isEmpty) error = 'Name is required';
+    if (firstName.isEmpty) error = 'First name is required';
+    if (error == null && lastName.isEmpty) error = 'Last name is required';
     if (error == null && !email.contains('@')) error = 'Enter a valid email';
     if (error == null && password.length < 8) error = 'Password must be 8+ chars';
     if (error == null && password != confirm) error = 'Passwords do not match';
@@ -64,20 +68,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    // Backend expects firstName + lastName.
-    final parts = name.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    final firstName = parts.isNotEmpty ? parts.first : name;
-    final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
-    if (lastName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter both first name and last name'),
-          backgroundColor: Colors.red,
-        ),
       );
       return;
     }
@@ -123,7 +113,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 18),
-                AppTextField(controller: _name, label: 'Name', hint: 'John Doe'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        controller: _firstName,
+                        label: 'First name',
+                        hint: 'John',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppTextField(
+                        controller: _lastName,
+                        label: 'Last name',
+                        hint: 'Doe',
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 AppTextField(
                   controller: _email,

@@ -17,64 +17,48 @@ spring:
           uri: lb://user-service
           predicates:
             - Path=/api/auth/**, /api/users/**
-          filters:
-            - StripPrefix=1
 
         # Organization Service Routes
         - id: organization-service
           uri: lb://organization-service
           predicates:
             - Path=/api/organizations/**, /api/subscriptions/**
-          filters:
-            - StripPrefix=1
 
         # Event Service Routes
         - id: event-service
           uri: lb://event-service
           predicates:
             - Path=/api/events/**, /api/categories/**
-          filters:
-            - StripPrefix=1
 
         # Order Service Routes
         - id: order-service
           uri: lb://order-service
           predicates:
             - Path=/api/orders/**, /api/cart/**
-          filters:
-            - StripPrefix=1
 
         # Ticket Service Routes
         - id: ticket-service
           uri: lb://ticket-service
           predicates:
             - Path=/api/tickets/**, /api/validate/**
-          filters:
-            - StripPrefix=1
 
         # Payment Service Routes
         - id: payment-service
           uri: lb://payment-service
           predicates:
             - Path=/api/payments/**, /api/refunds/**
-          filters:
-            - StripPrefix=1
 
         # Notification Service Routes
         - id: notification-service
           uri: lb://notification-service
           predicates:
             - Path=/api/notifications/**
-          filters:
-            - StripPrefix=1
 
         # Analytics Service Routes
         - id: analytics-service
           uri: lb://analytics-service
           predicates:
             - Path=/api/analytics/**, /api/dashboard/**
-          filters:
-            - StripPrefix=1
 
   security:
     oauth2:

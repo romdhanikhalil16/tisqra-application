@@ -18,6 +18,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RegisterUserRequest {
 
+    /**
+     * Optional username. If not provided, backend will default to email.
+     * This exists to support UIs that treat username separately from email.
+     */
+    private String username;
+
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
     private String email;

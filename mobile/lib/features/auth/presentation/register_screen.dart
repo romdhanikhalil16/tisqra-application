@@ -50,6 +50,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return 'Strong';
   }
 
+  String _toReadableError(Object error) {
+    final msg = error.toString();
+    if (msg.startsWith('Exception: ')) {
+      return msg.substring('Exception: '.length);
+    }
+    return msg;
+  }
+
   Future<void> _onRegister() async {
     final firstName = _firstName.text.trim();
     final lastName = _lastName.text.trim();
@@ -85,7 +93,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        SnackBar(content: Text(_toReadableError(e)), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _loading = false);

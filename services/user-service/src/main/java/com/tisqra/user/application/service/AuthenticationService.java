@@ -1,6 +1,7 @@
 package com.tisqra.user.application.service;
 
 import com.tisqra.common.exception.BusinessException;
+import com.tisqra.common.enums.UserRole;
 import com.tisqra.user.application.dto.*;
 import com.tisqra.user.application.mapper.UserMapper;
 import com.tisqra.user.domain.model.User;
@@ -29,36 +30,44 @@ public class AuthenticationService {
 
     @Transactional
     public UserDTO register(RegisterUserRequest request) {
-        log.info("Registering new user with email: {}", request.getEmail());
+        final String normalizedEmail = normalizeEmail(request.getEmail());
+        log.info("Registering new user with email: {}", normalizedEmail);
 
         // Check if user already exists
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("User with email " + request.getEmail() + " already exists");
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new BusinessException("User with email " + normalizedEmail + " already exists");
+        }
+
+        final UserRole role;
+        try {
+            role = request.resolveRole();
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ex.getMessage());
         }
 
         final String username = Optional.ofNullable(request.getUsername())
             .map(String::trim)
             .filter(u -> !u.isEmpty())
-            .orElse(request.getEmail());
+            .orElse(normalizedEmail);
 
         // Create user in Keycloak
         String keycloakId = keycloakAdminClient.createUser(
             username,
-            request.getEmail(),
+            normalizedEmail,
             request.getPassword(),
             request.getFirstName(),
             request.getLastName(),
-            request.getRole()
+            role
         );
 
         // Create user in our database
         User user = User.builder()
-            .email(request.getEmail())
+            .email(normalizedEmail)
             .keycloakId(keycloakId)
             .firstName(request.getFirstName())
             .lastName(request.getLastName())
             .phone(request.getPhone())
-            .role(request.getRole())
+            .role(role)
             .isActive(true)
             .emailVerified(false)
             .build();
@@ -76,16 +85,17 @@ public class AuthenticationService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        log.info("User login attempt: {}", request.getEmail());
+        final String normalizedEmail = normalizeEmail(request.getEmail());
+        log.info("User login attempt: {}", normalizedEmail);
 
         // Authenticate with Keycloak
         LoginResponse loginResponse = keycloakAdminClient.authenticate(
-            request.getEmail(),
+            normalizedEmail,
             request.getPassword()
         );
 
         // Get user from database
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(normalizedEmail)
             .orElseThrow(() -> new BusinessException("Invalid credentials"));
 
         if (!user.getIsActive()) {
@@ -101,7 +111,7 @@ public class AuthenticationService {
 
         auditLogService.logAction(user.getId(), "USER_LOGIN", "User logged in successfully", null, null);
 
-        log.info("User logged in successfully: {}", request.getEmail());
+        log.info("User logged in successfully: {}", normalizedEmail);
         return loginResponse;
     }
 
@@ -173,5 +183,12 @@ public class AuthenticationService {
         auditLogService.logAction(userId, "USER_LOGOUT", "User logged out", null, null);
 
         log.info("User logged out successfully");
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        return email.trim().toLowerCase();
     }
 }

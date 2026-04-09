@@ -8,6 +8,7 @@ class TokenStorage {
   static const _kUserId = 'user_id';
   static const _kUserEmail = 'user_email';
   static const _kUserName = 'user_name';
+  static const _kUserRole = 'user_role';
   static const _kExpiresAt = 'expires_at_ms';
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
@@ -26,10 +27,12 @@ class TokenStorage {
     required String userId,
     required String email,
     required String name,
+    required String role,
   }) async {
     await _storage.write(key: _kUserId, value: userId);
     await _storage.write(key: _kUserEmail, value: email);
     await _storage.write(key: _kUserName, value: name);
+    await _storage.write(key: _kUserRole, value: role);
   }
 
   Future<String?> readAccessToken() => _storage.read(key: _kAccessToken);
@@ -43,6 +46,7 @@ class TokenStorage {
   Future<String?> readUserId() => _storage.read(key: _kUserId);
   Future<String?> readUserEmail() => _storage.read(key: _kUserEmail);
   Future<String?> readUserName() => _storage.read(key: _kUserName);
+  Future<String?> readUserRole() => _storage.read(key: _kUserRole);
 
   Future<void> clear() async {
     await _storage.delete(key: _kAccessToken);
@@ -50,6 +54,7 @@ class TokenStorage {
     await _storage.delete(key: _kUserId);
     await _storage.delete(key: _kUserEmail);
     await _storage.delete(key: _kUserName);
+    await _storage.delete(key: _kUserRole);
     await _storage.delete(key: _kExpiresAt);
   }
 }

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -75,6 +76,24 @@ public class GlobalExceptionHandler {
             .code("VALIDATION_FAILED")
             .message("Input validation failed")
             .details(details)
+            .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.<Void>builder()
+                .success(false)
+                .error(error)
+                .build());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+        log.error("Malformed JSON request: {}", ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+            .code("MALFORMED_JSON")
+            .message("Malformed JSON request body")
+            .details(null)
             .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

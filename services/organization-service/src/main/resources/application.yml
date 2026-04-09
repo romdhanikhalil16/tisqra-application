@@ -35,8 +35,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/tisqra
-          jwk-set-uri: http://localhost:8180/realms/tisqra/protocol/openid-connect/certs
+          issuer-uri: http://localhost:8180/realms/event-ticketing
+          jwk-set-uri: http://localhost:8180/realms/event-ticketing/protocol/openid-connect/certs
 
 eureka:
   client:

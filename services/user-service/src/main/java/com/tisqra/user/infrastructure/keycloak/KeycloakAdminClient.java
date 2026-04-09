@@ -106,7 +106,11 @@ public class KeycloakAdminClient {
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
             body.add("grant_type", "password");
             body.add("client_id", clientId);
-            body.add("client_secret", clientSecret);
+            // Only include client_secret when configured.
+            // Many Keycloak setups use a public client for direct-access-grants.
+            if (clientSecret != null && !clientSecret.trim().isEmpty()) {
+                body.add("client_secret", clientSecret);
+            }
             body.add("username", email);
             body.add("password", password);
 

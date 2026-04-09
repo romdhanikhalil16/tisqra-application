@@ -1,5 +1,6 @@
 package com.tisqra.user.application.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.tisqra.common.enums.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -40,6 +41,21 @@ public class RegisterUserRequest {
 
     private String phone;
 
+    @JsonAlias("userRole")
     @Builder.Default
-    private UserRole role = UserRole.GUEST; // Default to GUEST for public signup
+    private String role = UserRole.GUEST.name(); // Default to GUEST for public signup
+
+    public UserRole resolveRole() {
+        if (role == null || role.trim().isEmpty()) {
+            return UserRole.GUEST;
+        }
+
+        try {
+            return UserRole.valueOf(role.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(
+                "Unsupported role '" + role + "'. Allowed values: SUPER_ADMIN, ADMIN_ORG, SCANNER, GUEST"
+            );
+        }
+    }
 }

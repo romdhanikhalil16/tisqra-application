@@ -37,6 +37,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return null;
   }
 
+  String _toReadableError(Object error) {
+    final msg = error.toString();
+    if (msg.startsWith('Exception: ')) {
+      return msg.substring('Exception: '.length);
+    }
+    return msg;
+  }
+
   Future<void> _onLogin() async {
     final emailError = _validateEmail(_email.text);
     final passError = _validatePassword(_password.text);
@@ -59,7 +67,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        SnackBar(content: Text(_toReadableError(e)), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _loading = false);

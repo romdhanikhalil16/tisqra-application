@@ -39,12 +39,12 @@
     {
       "clientId": "event-ticketing-client",
       "enabled": true,
-      "publicClient": false,
+      "publicClient": true,
       "bearerOnly": false,
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": true,
+      "serviceAccountsEnabled": false,
       "protocol": "openid-connect",
       "fullScopeAllowed": true,
       "redirectUris": [

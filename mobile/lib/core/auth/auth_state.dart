@@ -5,6 +5,7 @@ class AuthState {
   final String? userId;
   final String? userEmail;
   final String? userName;
+  final String? userRole;
 
   const AuthState({
     this.accessToken,
@@ -13,6 +14,7 @@ class AuthState {
     this.userId,
     this.userEmail,
     this.userName,
+    this.userRole,
   });
 
   const AuthState.unauthenticated()
@@ -21,7 +23,8 @@ class AuthState {
         expiresAtMs = null,
         userId = null,
         userEmail = null,
-        userName = null;
+        userName = null,
+        userRole = null;
 
   bool get isAuthenticated => accessToken != null && expiresAtMs != null;
 

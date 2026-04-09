@@ -187,6 +187,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
       SPRING_CLOUD_CONFIG_URI: http://config-server:8888
       KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-root}
     ports:
       - "8080:8080"
     depends_on:

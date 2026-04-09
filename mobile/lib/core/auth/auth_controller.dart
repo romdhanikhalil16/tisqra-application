@@ -26,6 +26,10 @@ class AuthController extends StateNotifier<AuthState> {
   final ApiClient _apiClient;
 
   final Dio _keycloakDio = Dio();
+  static const Set<String> _blockedRegularAuthRoles = {
+    'SUPER_ADMIN',
+    'ADMIN_ORG',
+  };
 
   Future<void> initialize() async {
     final accessToken = await _tokenStorage.readAccessToken();
@@ -34,6 +38,7 @@ class AuthController extends StateNotifier<AuthState> {
     final userId = await _tokenStorage.readUserId();
     final userEmail = await _tokenStorage.readUserEmail();
     final userName = await _tokenStorage.readUserName();
+    final userRole = await _tokenStorage.readUserRole();
 
     if (accessToken == null || refreshToken == null || expiresAtMs == null) {
       state = const AuthState.unauthenticated();
@@ -41,6 +46,11 @@ class AuthController extends StateNotifier<AuthState> {
     }
 
     if (expiresAtMs - 60 * 1000 > DateTime.now().millisecondsSinceEpoch) {
+      if (userRole != null && _blockedRegularAuthRoles.contains(userRole.toUpperCase())) {
+        await _tokenStorage.clear();
+        state = const AuthState.unauthenticated();
+        return;
+      }
       state = AuthState(
         accessToken: accessToken,
         refreshToken: refreshToken,
@@ -48,6 +58,7 @@ class AuthController extends StateNotifier<AuthState> {
         userId: userId,
         userEmail: userEmail,
         userName: userName,
+        userRole: userRole,
       );
       return;
     }
@@ -66,6 +77,7 @@ class AuthController extends StateNotifier<AuthState> {
       userId: userId,
       userEmail: userEmail,
       userName: userName,
+      userRole: userRole,
     );
   }
 
@@ -118,6 +130,7 @@ class AuthController extends StateNotifier<AuthState> {
     final userDto = userResp.data!;
     final userId = userDto['id']?.toString();
     final userEmail = userDto['email']?.toString() ?? email;
+    final userRole = userDto['role']?.toString().toUpperCase() ?? '';
     final firstName = userDto['firstName']?.toString() ?? '';
     final lastName = userDto['lastName']?.toString() ?? '';
     final userName = (firstName.isNotEmpty || lastName.isNotEmpty)
@@ -126,6 +139,17 @@ class AuthController extends StateNotifier<AuthState> {
 
     if (userId == null) {
       throw Exception('User id missing in user-service response');
+    }
+    if (userRole.isEmpty) {
+      throw Exception('User role missing in user-service response');
+    }
+    if (_blockedRegularAuthRoles.contains(userRole)) {
+      await _tokenStorage.clear();
+      state = const AuthState.unauthenticated();
+      throw Exception(
+        'This account type is not allowed in the regular mobile app login. '
+        'Please use the admin portal.',
+      );
     }
 
     await _tokenStorage.saveTokens(
@@ -137,6 +161,7 @@ class AuthController extends StateNotifier<AuthState> {
       userId: userId,
       email: userEmail,
       name: userName,
+      role: userRole,
     );
 
     state = AuthState(
@@ -146,6 +171,7 @@ class AuthController extends StateNotifier<AuthState> {
       userId: userId,
       userEmail: userEmail,
       userName: userName,
+      userRole: userRole,
     );
   }
 
@@ -164,11 +190,20 @@ class AuthController extends StateNotifier<AuthState> {
         'firstName': firstName,
         'lastName': lastName,
         'phone': null,
+        'role': 'GUEST',
       },
     );
 
     if (!apiResponse.success) {
       throw Exception(apiResponse.error?.message ?? 'Registration failed');
+    }
+    final data = apiResponse.data as Map<String, dynamic>?;
+    final registeredRole = data?['role']?.toString().toUpperCase() ?? 'GUEST';
+    if (_blockedRegularAuthRoles.contains(registeredRole)) {
+      throw Exception(
+        'Regular registration can only create guest accounts. '
+        'Admin accounts must be created by a superadmin.',
+      );
     }
   }
 

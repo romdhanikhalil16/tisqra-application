@@ -1,5 +1,6 @@
 package com.tisqra.user.application.service;
 
+import com.tisqra.common.enums.UserRole;
 import com.tisqra.common.exception.BusinessException;
 import com.tisqra.common.exception.ResourceNotFoundException;
 import com.tisqra.user.application.dto.CreateUserRequest;
@@ -14,9 +15,15 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -36,6 +43,7 @@ public class UserService {
     @Transactional
     public UserDTO createUser(CreateUserRequest request) {
         log.info("Creating new user with email: {}", request.getEmail());
+        validateAdminOrgCreationAccess(request.getRole());
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException("User with email " + request.getEmail() + " already exists");
@@ -53,6 +61,26 @@ public class UserService {
 
         log.info("User created successfully with ID: {}", user.getId());
         return userMapper.toDTO(user);
+    }
+
+    private void validateAdminOrgCreationAccess(UserRole targetRole) {
+        if (targetRole != UserRole.ADMIN_ORG) {
+            return;
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
+            throw new BusinessException("Only SUPER_ADMIN can create ADMIN_ORG accounts");
+        }
+
+        Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
+        Object rolesObj = realmAccess == null ? null : realmAccess.get("roles");
+        Collection<?> roles = rolesObj instanceof Collection<?> c ? c : Collections.emptyList();
+        boolean isSuperAdmin = roles.stream().anyMatch(role -> "SUPER_ADMIN".equals(String.valueOf(role)));
+
+        if (!isSuperAdmin) {
+            throw new BusinessException("Only SUPER_ADMIN can create ADMIN_ORG accounts");
+        }
     }
 
     @Cacheable(value = "users", key = "#id")

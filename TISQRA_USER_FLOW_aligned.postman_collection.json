@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "TISQRA Platform - API Collection (Aligned)",
-    "description": "Clean Postman collection aligned with current controller endpoints and DTO request fields. Use {{BASE_URL}} as API Gateway base.",
+    "description": "Clean Postman collection aligned with current controller endpoints and DTO request fields. Use {{BASE_URL}} as API Gateway base.\n\nRecommended auth order: Register → Verify email (paste full link or raw token into {{VERIFY_TOKEN}}) → Login → Logout.\n\nDocker dev: MailHog UI at http://localhost:8025 — open the verification message, copy the token query value into {{VERIFY_TOKEN}}. Resend uses {{EMAIL}} (set by Register test script).\n\nProduction: set EMAIL_HOST/PORT/USER/PASS (and EMAIL_SMTP_AUTH=true, EMAIL_SMTP_STARTTLS=true for TLS providers).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -36,6 +36,27 @@
       "item": [
         {
           "name": "Register (public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const body = JSON.parse(pm.request.body.raw || '{}');",
+                  "  if (body.email) pm.collectionVariables.set('EMAIL', body.email);",
+                  "} catch (e) {}",
+                  "pm.test('Register returns 201', function () { pm.response.to.have.status(201); });",
+                  "const j = pm.response.json();",
+                  "pm.test('Register success', function () { pm.expect(j.success).to.be.true; });",
+                  "if (j.success && j.data && j.data.id) {",
+                  "  pm.collectionVariables.set('USER_ID', j.data.id);",
+                  "}",
+                  "// VERIFY_TOKEN is sent by email only — paste it from the link into collection variable VERIFY_TOKEN."
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -51,7 +72,107 @@
           }
         },
         {
+          "name": "Verify email (token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Verify email returns 200', function () { pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test('Verify email success', function () { pm.expect(j.success).to.be.true; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/email/verify?token={{VERIFY_TOKEN}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "email", "verify"],
+              "query": [{ "key": "token", "value": "{{VERIFY_TOKEN}}" }]
+            }
+          }
+        },
+        {
+          "name": "Resend verification email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Resend returns 200', function () { pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test('Resend success', function () { pm.expect(j.success).to.be.true; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/email/resend-verification?email={{EMAIL}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "email", "resend-verification"],
+              "query": [{ "key": "email", "value": "{{EMAIL}}" }]
+            }
+          }
+        },
+        {
           "name": "Login (any role)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login returns 200', function () { pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.success && j.data) {",
+                  "  if (j.data.accessToken) pm.collectionVariables.set('ACCESS_TOKEN', j.data.accessToken);",
+                  "  if (j.data.user && j.data.user.id) pm.collectionVariables.set('USER_ID', j.data.user.id);",
+                  "  if (j.data.user && j.data.user.email) pm.collectionVariables.set('EMAIL', j.data.user.email);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{EMAIL}}\",\n  \"password\": \"Guest12345!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login (SUPER_ADMIN seed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login returns 200', function () { pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.success && j.data) {",
+                  "  if (j.data.accessToken) pm.collectionVariables.set('ACCESS_TOKEN', j.data.accessToken);",
+                  "  if (j.data.user && j.data.user.id) pm.collectionVariables.set('USER_ID', j.data.user.id);",
+                  "  if (j.data.user && j.data.user.email) pm.collectionVariables.set('EMAIL', j.data.user.email);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -68,6 +189,19 @@
         },
         {
           "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Logout returns 200', function () { pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test('Logout success', function () { pm.expect(j.success).to.be.true; });"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
@@ -76,18 +210,6 @@
               "host": ["{{BASE_URL}}"],
               "path": ["api", "auth", "logout"],
               "query": [{ "key": "userId", "value": "{{USER_ID}}" }]
-            }
-          }
-        },
-        {
-          "name": "Verify email (token)",
-          "request": {
-            "method": "POST",
-            "url": {
-              "raw": "{{BASE_URL}}/api/auth/email/verify?token={{VERIFY_TOKEN}}",
-              "host": ["{{BASE_URL}}"],
-              "path": ["api", "auth", "email", "verify"],
-              "query": [{ "key": "token", "value": "{{VERIFY_TOKEN}}" }]
             }
           }
         },

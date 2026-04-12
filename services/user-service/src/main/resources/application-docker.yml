@@ -13,6 +13,19 @@
   kafka:
     bootstrap-servers: kafka:9092
 
+  mail:
+    host: ${EMAIL_HOST:mailhog}
+    port: ${EMAIL_PORT:1025}
+    username: ${EMAIL_USER:}
+    password: ${EMAIL_PASS:}
+    properties:
+      mail:
+        smtp:
+          auth: ${EMAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${EMAIL_SMTP_STARTTLS:false}
+            required: false
+
   security:
     oauth2:
       resourceserver:
@@ -35,3 +48,7 @@ eureka:
       defaultZone: http://discovery-service:8761/eureka/
   instance:
     hostname: user-service
+
+app:
+  email-verification:
+    base-url: ${EMAIL_VERIFICATION_BASE_URL:http://localhost:8080/api/auth/email/verify?token=}

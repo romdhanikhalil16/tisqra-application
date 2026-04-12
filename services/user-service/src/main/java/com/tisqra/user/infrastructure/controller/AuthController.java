@@ -67,4 +67,11 @@ public class AuthController {
         authenticationService.verifyEmail(token);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
     }
+
+    @PostMapping("/email/resend-verification")
+    @Operation(summary = "Resend verification email")
+    public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(@RequestParam String email) {
+        authenticationService.resendVerificationEmail(email);
+        return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
+    }
 }

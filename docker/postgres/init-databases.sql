@@ -1,0 +1,21 @@
+﻿-- Create databases for microservices
+CREATE DATABASE IF NOT EXISTS user_db;
+CREATE DATABASE IF NOT EXISTS organization_db;
+CREATE DATABASE IF NOT EXISTS event_db;
+CREATE DATABASE IF NOT EXISTS order_db;
+CREATE DATABASE IF NOT EXISTS ticket_db;
+CREATE DATABASE IF NOT EXISTS payment_db;
+CREATE DATABASE IF NOT EXISTS notification_db;
+CREATE DATABASE IF NOT EXISTS analytics_db;
+CREATE DATABASE IF NOT EXISTS keycloak_db;
+
+-- Grant privileges (repeat for each database)
+GRANT ALL PRIVILEGES ON DATABASE user_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE organization_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE event_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE order_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE ticket_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE payment_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE notification_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE analytics_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE keycloak_db TO postgres;

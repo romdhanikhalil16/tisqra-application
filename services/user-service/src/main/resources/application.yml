@@ -37,6 +37,19 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+  mail:
+    host: ${EMAIL_HOST:localhost}
+    port: ${EMAIL_PORT:1025}
+    username: ${EMAIL_USER:no-reply@tisqra.com}
+    password: ${EMAIL_PASS:}
+    properties:
+      mail:
+        smtp:
+          auth: ${EMAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${EMAIL_SMTP_STARTTLS:true}
+            required: ${EMAIL_SMTP_STARTTLS_REQUIRED:false}
+
   security:
     oauth2:
       resourceserver:
@@ -83,3 +96,7 @@ logging:
     org.springframework.security: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+app:
+  email-verification:
+    base-url: ${EMAIL_VERIFICATION_BASE_URL:http://localhost:8080/api/auth/email/verify?token=}

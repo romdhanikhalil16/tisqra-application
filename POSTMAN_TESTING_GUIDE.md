@@ -19,6 +19,12 @@ All endpoints below refer to the API Gateway base URL (default: `{{BASE_URL}}`).
 ### 1.1 Start services
 Use your existing Docker Compose / Jenkins workflow to bring the platform up.
 
+Docker Compose includes **MailHog** for local SMTP (no real mailbox required):
+- SMTP: `localhost:1025` (from your host) or hostname `mailhog:1025` from containers
+- Web UI to read messages: `http://localhost:8025`
+
+`user-service` and `notification-service` default to `EMAIL_HOST=mailhog` in the `docker` profile so verification and notification emails are delivered to MailHog unless you override `EMAIL_*` with a real provider (Brevo, SendGrid, etc.).
+
 ### 1.2 Verify the Gateway is reachable
 In Postman, run a quick check:
 - `GET {{BASE_URL}}/actuator/health`
@@ -44,6 +50,7 @@ Set (or override) these collection/environment variables:
 - `PROMO_CODE_ID`
 - `PAGE` and `SIZE` (default `0` and `20`)
 - `START_DATE` / `END_DATE` in `YYYY-MM-DD` format (for analytics)
+- `VERIFY_TOKEN` (paste from verification email link after Register or Resend)
 
 ### 1.4 Expected response shape (most endpoints)
 Most protected controllers return:
@@ -82,6 +89,43 @@ For `POST {{BASE_URL}}/api/auth/login`, only `email` and `password` are required
 - `SUPER_ADMIN` and `ADMIN_ORG` are blocked from regular mobile login with a clear message.
 - Public registration always creates `GUEST` accounts.
 - Creating `ADMIN_ORG` users via `POST /api/users` is restricted to `SUPER_ADMIN` at API level.
+
+### 1.7 Auth flow details (important for Postman)
+Email verification is DB-backed and sent over **real SMTP** (MailHog in Docker dev, or your provider in prod).
+
+**Recommended order in Postman**
+1. **Register** — `POST {{BASE_URL}}/api/auth/register` → `201`, sets collection `EMAIL` + `USER_ID` (test script).
+2. **Read the verification email** — MailHog UI `http://localhost:8025` (Docker), or your real inbox (prod). Copy only the **token** value (everything after `token=` in the link), or paste the **entire URL** into `VERIFY_TOKEN` (the API normalizes both).
+3. **Verify email** — `POST {{BASE_URL}}/api/auth/email/verify?token={{VERIFY_TOKEN}}` → `200`.
+4. **Login** — use the same email/password as Register (collection **Login** uses `{{EMAIL}}` + `Guest12345!` to match the default Register body). Test script fills `ACCESS_TOKEN` and `USER_ID`.
+5. **Logout** — `POST {{BASE_URL}}/api/auth/logout?userId={{USER_ID}}` (must be the **application** user id from login `data.user.id`, not JWT `sub`). Returns `200` if the user exists; Keycloak session revoke is best-effort and does not fail the call.
+
+**Resend** (optional): `POST {{BASE_URL}}/api/auth/email/resend-verification?email={{EMAIL}}` — issues a new token and sends again. Use when the token expired or email was lost.
+
+#### SMTP / Mail environment variables
+| Variable | Purpose |
+|----------|---------|
+| `EMAIL_HOST` | SMTP host (Docker default: `mailhog`) |
+| `EMAIL_PORT` | SMTP port (Docker default: `1025`) |
+| `EMAIL_USER` / `EMAIL_PASS` | SMTP auth (empty for MailHog) |
+| `EMAIL_SMTP_AUTH` | `true` / `false` (MailHog: `false`) |
+| `EMAIL_SMTP_STARTTLS` | `true` / `false` (MailHog: `false`) |
+| `EMAIL_VERIFICATION_BASE_URL` | Prefix for the link in the email (must end with `token=`; default through gateway: `http://localhost:8080/api/auth/email/verify?token=`) |
+
+**notification-service** (Docker): `spring.mail` reads `EMAIL_*` first, then falls back to `BREVO_*`, so one set of env vars can feed both services.
+
+#### Verify / resend / logout troubleshooting
+| Symptom | Likely cause | Fix |
+|---------|----------------|-----|
+| `400` + “Invalid verification token” | Wrong/pasted link fragment, or token never stored | Use MailHog to confirm the message; run **Resend**; paste full URL or raw token into `VERIFY_TOKEN` |
+| `400` + “User not found” on **Resend** | `{{EMAIL}}` does not match a registered user | Run **Register** first (script sets `EMAIL`) or set `EMAIL` manually to the registered address |
+| `400` + “Failed to send verification email” | SMTP misconfiguration | For real SMTP set `EMAIL_SMTP_AUTH=true`, `EMAIL_SMTP_STARTTLS=true`, correct host/port/credentials |
+| `500` on **Resend** (generic) | Uncaught error (e.g. DB migration missing `verification_token` column) | Rebuild `user-service`, ensure Flyway `V3` applied; check logs |
+| `400` on **Logout** | `USER_ID` empty or wrong (e.g. JWT `sub`) | Run **Login** after Register so the test script sets `USER_ID` from `data.user.id` |
+
+#### Postman collection (`TISQRA_USER_FLOW_aligned.postman_collection.json`)
+- Folder **0) Auth** order: Register → Verify → Resend → Login (guest, `{{EMAIL}}` + password matching Register) → **Login (SUPER_ADMIN seed)** for admin flows → Logout.
+- **Register** / **Login** / **Logout** include test scripts for status and variable capture.
 
 ---
 

@@ -11,10 +11,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
       POSTGRES_MULTIPLE_DATABASES: user_db,organization_db,event_db,order_db,ticket_db,payment_db,notification_db,analytics_db,keycloak_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+      - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sql
     networks:
       - eventticket-network
     healthcheck:
@@ -42,6 +42,19 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # ========================================
+  # MailHog (SMTP test inbox — dev only)
+  # ========================================
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: tisqra-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - eventticket-network
 
   # ========================================
   # Zookeeper for Kafka
@@ -222,6 +235,13 @@ services:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
+      EMAIL_HOST: ${EMAIL_HOST:-mailhog}
+      EMAIL_PORT: ${EMAIL_PORT:-1025}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      EMAIL_SMTP_AUTH: ${EMAIL_SMTP_AUTH:-false}
+      EMAIL_SMTP_STARTTLS: ${EMAIL_SMTP_STARTTLS:-false}
+      EMAIL_VERIFICATION_BASE_URL: ${EMAIL_VERIFICATION_BASE_URL:-http://localhost:8080/api/auth/email/verify?token=}
     ports:
       - "8081:8081"
     depends_on:
@@ -230,6 +250,7 @@ services:
       - kafka
       - discovery-service
       - keycloak
+      - mailhog
     networks:
       - eventticket-network
 
@@ -306,15 +327,23 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-      BREVO_SMTP_HOST: ${BREVO_SMTP_HOST}
-      BREVO_SMTP_USERNAME: ${BREVO_SMTP_USERNAME}
-      BREVO_SMTP_PASSWORD: ${BREVO_SMTP_PASSWORD}
+      EMAIL_HOST: ${EMAIL_HOST:-mailhog}
+      EMAIL_PORT: ${EMAIL_PORT:-1025}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      EMAIL_SMTP_AUTH: ${EMAIL_SMTP_AUTH:-false}
+      EMAIL_SMTP_STARTTLS: ${EMAIL_SMTP_STARTTLS:-false}
+      BREVO_SMTP_HOST: ${BREVO_SMTP_HOST:-mailhog}
+      BREVO_SMTP_PORT: ${BREVO_SMTP_PORT:-1025}
+      BREVO_SMTP_USERNAME: ${BREVO_SMTP_USERNAME:-}
+      BREVO_SMTP_PASSWORD: ${BREVO_SMTP_PASSWORD:-}
     ports:
       - "8087:8087"
     depends_on:
       - postgres
       - kafka
       - discovery-service
+      - mailhog
     networks:
       - eventticket-network
 

@@ -9,6 +9,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -155,20 +156,55 @@ public class KeycloakAdminClient {
     }
 
     /**
-     * Verify user email
-     */
-    public String verifyEmail(String verificationToken) {
-        log.info("Verifying email with token");
-        // In production, validate token and mark email as verified in Keycloak
-        return UUID.randomUUID().toString();
-    }
-
-    /**
-     * Revoke all user sessions
+     * Revoke all user sessions (invalidates access tokens server-side).
      */
     public void revokeUserSessions(String keycloakId) {
         log.info("Revoking sessions for user: {}", keycloakId);
-        // In production, revoke all sessions in Keycloak
+        try {
+            String adminToken = getAdminToken();
+            String url = keycloakServerUrl + "/admin/realms/" + realm + "/users/" + keycloakId + "/logout";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(adminToken);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            restTemplate.postForEntity(url, entity, Void.class);
+        } catch (HttpStatusCodeException e) {
+            log.warn("Keycloak session revoke returned {} for user {}: {}", e.getStatusCode(), keycloakId, e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.warn("Keycloak session revoke failed for user {}: {}", keycloakId, e.getMessage());
+        }
+    }
+
+    /**
+     * Mark email as verified in Keycloak (keeps IdP in sync with application DB).
+     */
+    public void markEmailVerified(String keycloakUserId) {
+        try {
+            String adminToken = getAdminToken();
+            String url = keycloakServerUrl + "/admin/realms/" + realm + "/users/" + keycloakUserId;
+            HttpHeaders getHeaders = new HttpHeaders();
+            getHeaders.setBearerAuth(adminToken);
+            ResponseEntity<Map> getResp = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                new HttpEntity<>(getHeaders),
+                Map.class
+            );
+            Map<String, Object> body = getResp.getBody();
+            if (body == null) {
+                throw new BusinessException("Keycloak user not found");
+            }
+            body.put("emailVerified", true);
+
+            HttpHeaders putHeaders = new HttpHeaders();
+            putHeaders.setContentType(MediaType.APPLICATION_JSON);
+            putHeaders.setBearerAuth(adminToken);
+            restTemplate.exchange(url, HttpMethod.PUT, new HttpEntity<>(body, putHeaders), Void.class);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to mark email verified in Keycloak for {}", keycloakUserId, e);
+            throw new BusinessException("Failed to sync email verification with Keycloak: " + e.getMessage());
+        }
     }
 
     /**

@@ -63,6 +63,12 @@ public class User {
     @Column(length = 255)
     private String profileImageUrl;
 
+    @Column(length = 255, unique = true)
+    private String verificationToken;
+
+    @Column
+    private LocalDateTime verificationTokenExpiresAt;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -92,5 +98,16 @@ public class User {
 
     public void verifyEmail() {
         this.emailVerified = true;
+        this.verificationToken = null;
+        this.verificationTokenExpiresAt = null;
+    }
+
+    public void issueVerificationToken(String token, LocalDateTime expiresAt) {
+        this.verificationToken = token;
+        this.verificationTokenExpiresAt = expiresAt;
+    }
+
+    public boolean isVerificationTokenExpired() {
+        return verificationTokenExpiresAt == null || verificationTokenExpiresAt.isBefore(LocalDateTime.now());
     }
 }

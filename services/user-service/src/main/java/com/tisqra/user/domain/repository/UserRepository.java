@@ -17,6 +17,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByKeycloakId(String keycloakId);
 
+    Optional<User> findByVerificationToken(String verificationToken);
+
     boolean existsByEmail(String email);
 
     boolean existsByKeycloakId(String keycloakId);

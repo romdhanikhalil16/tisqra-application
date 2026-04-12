@@ -5,6 +5,20 @@ spring:
   kafka:
     bootstrap-servers: kafka:9092
 
+  # Prefer unified EMAIL_* env vars; fall back to BREVO_* for backward compatibility.
+  mail:
+    host: ${EMAIL_HOST:${BREVO_SMTP_HOST:smtp-relay.brevo.com}}
+    port: ${EMAIL_PORT:${BREVO_SMTP_PORT:587}}
+    username: ${EMAIL_USER:${BREVO_SMTP_USERNAME:}}
+    password: ${EMAIL_PASS:${BREVO_SMTP_PASSWORD:}}
+    properties:
+      mail:
+        smtp:
+          auth: ${EMAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${EMAIL_SMTP_STARTTLS:true}
+            required: ${EMAIL_SMTP_STARTTLS_REQUIRED:false}
+
   security:
     oauth2:
       resourceserver:

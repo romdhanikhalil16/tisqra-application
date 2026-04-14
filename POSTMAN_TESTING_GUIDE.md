@@ -19,6 +19,32 @@ All endpoints below refer to the API Gateway base URL (default: `{{BASE_URL}}`).
 ### 1.1 Start services
 Use your existing Docker Compose / Jenkins workflow to bring the platform up.
 
+### 1.1.1 PostgreSQL port mapping (critical for pgAdmin / manual DB edits)
+In `docker-compose.yml`, Postgres is exposed as **host `5433` → container `5432`**.
+
+- If you're connecting from your host (pgAdmin, DBeaver, `psql` on Windows), use:
+  - **Host**: `localhost`
+  - **Port**: `5433`
+  - **Database**: `user_db` (for user-service)
+  - **User**: `postgres` (default)
+  - **Password**: `root` (default)
+
+If you accidentally connect pgAdmin to `localhost:5432`, you may be looking at a *different* Postgres instance than the one the services use, which can cause confusing behavior like “user already exists” after you “deleted” the row.
+
+#### Quick SQL to confirm you're in the right database
+Run this in pgAdmin Query Tool (connected to `user_db`) **before and after** deleting a user:
+
+```sql
+select current_database() as db,
+       current_schema() as schema,
+       inet_server_addr() as server_addr,
+       inet_server_port() as server_port;
+
+select count(*) as users_with_email
+from users
+where lower(trim(email)) = lower(trim('<EMAIL_HERE>'));
+```
+
 Docker Compose includes **MailHog** for local SMTP (no real mailbox required):
 - SMTP: `localhost:1025` (from your host) or hostname `mailhog:1025` from containers
 - Web UI to read messages: `http://localhost:8025`
@@ -122,6 +148,7 @@ Email verification is DB-backed and sent over **real SMTP** (MailHog in Docker d
 | `400` + “Failed to send verification email” | SMTP misconfiguration | For real SMTP set `EMAIL_SMTP_AUTH=true`, `EMAIL_SMTP_STARTTLS=true`, correct host/port/credentials |
 | `500` on **Resend** (generic) | Uncaught error (e.g. DB migration missing `verification_token` column) | Rebuild `user-service`, ensure Flyway `V3` applied; check logs |
 | `400` on **Logout** | `USER_ID` empty or wrong (e.g. JWT `sub`) | Run **Login** after Register so the test script sets `USER_ID` from `data.user.id` |
+| Re-register fails with “user exists” after you deleted the row in pgAdmin | User still exists in **Keycloak** (separate DB) | Delete the user in Keycloak admin UI (realm `event-ticketing`) then register again |
 
 #### Postman collection (`TISQRA_USER_FLOW_aligned.postman_collection.json`)
 - Folder **0) Auth** order: Register → Verify → Resend → Login (guest, `{{EMAIL}}` + password matching Register) → **Login (SUPER_ADMIN seed)** for admin flows → Logout.

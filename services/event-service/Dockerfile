@@ -2,6 +2,8 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache wget
+
 # Copy the pre-built JAR(s) from local build.
 # Spring Boot's repackage goal leaves a "*.jar.original" next to the runnable jar.
 COPY services/event-service/target/*.jar /app/

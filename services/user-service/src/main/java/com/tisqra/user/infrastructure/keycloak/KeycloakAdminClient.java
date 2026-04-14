@@ -42,6 +42,55 @@ public class KeycloakAdminClient {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    public Optional<String> findUserIdByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return Optional.empty();
+        }
+
+        try {
+            String adminToken = getAdminToken();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(adminToken);
+
+            String url = keycloakServerUrl + "/admin/realms/" + realm + "/users?email=" + email.trim();
+            ResponseEntity<List> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                List.class
+            );
+
+            List<?> body = response.getBody();
+            if (body == null) {
+                return Optional.empty();
+            }
+
+            for (Object item : body) {
+                if (!(item instanceof Map<?, ?> m)) {
+                    continue;
+                }
+                Object id = m.get("id");
+                Object kcEmail = m.get("email");
+                if (id != null && kcEmail != null && email.trim().equalsIgnoreCase(String.valueOf(kcEmail))) {
+                    return Optional.of(String.valueOf(id));
+                }
+            }
+            for (Object item : body) {
+                if (item instanceof Map<?, ?> m) {
+                    Object id = m.get("id");
+                    if (id != null) {
+                        return Optional.of(String.valueOf(id));
+                    }
+                }
+            }
+
+            return Optional.empty();
+        } catch (Exception e) {
+            log.warn("Keycloak lookup by email failed for {}: {}", email, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
     /**
      * Create a new user in Keycloak
      */
@@ -88,6 +137,10 @@ public class KeycloakAdminClient {
             log.info("User created in Keycloak with ID: {}", userId);
             return userId;
 
+        } catch (HttpStatusCodeException e) {
+            // Preserve status text in message so caller can handle conflicts (409) explicitly.
+            log.error("Failed to create user in Keycloak (status {}): {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BusinessException("Failed to create user: " + e.getStatusCode() + " " + e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error("Failed to create user in Keycloak", e);
             throw new BusinessException("Failed to create user: " + e.getMessage());

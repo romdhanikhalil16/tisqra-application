@@ -60,19 +60,38 @@ public class AuthenticationService {
             .filter(u -> !u.isEmpty())
             .orElse(normalizedEmail);
 
-        String keycloakId = keycloakAdminClient.createUser(
-            username,
-            normalizedEmail,
-            request.getPassword(),
-            request.getFirstName(),
-            request.getLastName(),
-            role
-        );
+        String keycloakId;
+        try {
+            keycloakId = keycloakAdminClient.createUser(
+                username,
+                normalizedEmail,
+                request.getPassword(),
+                request.getFirstName(),
+                request.getLastName(),
+                role
+            );
+        } catch (BusinessException ex) {
+            // If Postgres was manually modified (row deleted) but Keycloak still has the user,
+            // make registration idempotent by re-linking to the existing Keycloak account.
+            // Security: require the caller to prove they know the existing password.
+            String msg = String.valueOf(ex.getMessage());
+            boolean looksLikeKeycloakConflict = msg.contains("409") || msg.toLowerCase().contains("user exists");
+            if (!looksLikeKeycloakConflict) {
+                throw ex;
+            }
 
+            keycloakAdminClient.authenticate(normalizedEmail, request.getPassword());
+            keycloakId = keycloakAdminClient.findUserIdByEmail(normalizedEmail)
+                .orElseThrow(() -> new BusinessException(
+                    "User exists in Keycloak but could not be resolved by email; contact support"
+                ));
+        }
+
+        final String resolvedKeycloakId = keycloakId;
         User saved = transactionTemplate.execute(status -> {
             User user = User.builder()
                 .email(normalizedEmail)
-                .keycloakId(keycloakId)
+                .keycloakId(resolvedKeycloakId)
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .phone(request.getPhone())

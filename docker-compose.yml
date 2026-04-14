@@ -154,9 +154,7 @@ services:
     networks:
       - eventticket-network
     healthcheck:
-      # Discovery has no custom security on /actuator/health, but if actuator changes,
-      # fall back to a simple TCP check so the service isn't marked unhealthy incorrectly.
-      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || nc -z localhost 8761"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -181,7 +179,7 @@ services:
     networks:
       - eventticket-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8888/actuator/health || nc -z localhost 8888"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8888/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -210,7 +208,7 @@ services:
     networks:
       - eventticket-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || nc -z localhost 8080"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

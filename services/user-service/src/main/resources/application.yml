@@ -6,7 +6,9 @@ spring:
     name: user-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/user_db
+    # Use explicit host/port/db to avoid connecting to the wrong Postgres instance
+    # (docker-compose exposes Postgres on host port 5433; containers use 5432 internally).
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:user_db}
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD:root}
     driver-class-name: org.postgresql.Driver

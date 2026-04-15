@@ -77,6 +77,7 @@ Set (or override) these collection/environment variables:
 - `PAGE` and `SIZE` (default `0` and `20`)
 - `START_DATE` / `END_DATE` in `YYYY-MM-DD` format (for analytics)
 - `VERIFY_TOKEN` (paste from verification email link after Register or Resend)
+- `RESET_TOKEN`, `NEW_PASSWORD` (for password reset flow)
 
 ### 1.4 Expected response shape (most endpoints)
 Most protected controllers return:
@@ -95,6 +96,7 @@ For `POST {{BASE_URL}}/api/auth/register`, the backend now accepts both:
 - `userRole` (backward-compatible alias)
 
 Role values are case-insensitive (`guest`, `GUEST`, `Guest` are all valid and normalized to `GUEST`).
+Public registration is restricted to `GUEST` only. Any attempt to register `SUPER_ADMIN`, `ADMIN_ORG`, or `SCANNER` through this endpoint returns `400`.
 
 Example (frontend-friendly):
 ```json
@@ -109,12 +111,25 @@ Example (frontend-friendly):
 ```
 
 For `POST {{BASE_URL}}/api/auth/login`, only `email` and `password` are required. Email is normalized (trimmed + lowercased) before authentication and DB lookup.
+Both register and login now return token payload under `data`:
+```json
+{
+  "success": true,
+  "data": {
+    "user": { "...": "..." },
+    "access_token": "<jwt>",
+    "token_type": "Bearer"
+  },
+  "error": null
+}
+```
 
 ### 1.6 Role restrictions (mobile + API)
 - Regular mobile auth screens (`/login`, `/register`) are for attendee flow only.
 - `SUPER_ADMIN` and `ADMIN_ORG` are blocked from regular mobile login with a clear message.
 - Public registration always creates `GUEST` accounts.
 - Creating `ADMIN_ORG` users via `POST /api/users` is restricted to `SUPER_ADMIN` at API level.
+- `SCANNER` and `ADMIN_ORG` accounts must be provisioned by `SUPER_ADMIN` (not by public register flow).
 
 ### 1.7 Auth flow details (important for Postman)
 Email verification is DB-backed and sent over **real SMTP** (MailHog in Docker dev, or your provider in prod).
@@ -453,6 +468,26 @@ Body (`CreateUserRequest`):
 ```
 Expected: HTTP `201`, `data.id` is a UUID (set `USER_ID`)
 
+#### A2.2.b Provision scanner/admin_org with credentials (SUPER_ADMIN only)
+Endpoint:
+`POST {{BASE_URL}}/api/users/provision`
+
+Body:
+```json
+{
+  "email": "newscanner@example.com",
+  "password": "Scanner123!",
+  "firstName": "New",
+  "lastName": "Scanner",
+  "phone": "+21600000000",
+  "role": "SCANNER"
+}
+```
+Expected:
+- HTTP `201`
+- Creates account in both Keycloak and `user_db`
+- User can login immediately and change password later
+
 Authorization rule:
 - If request body has `"role": "ADMIN_ORG"`, caller must be `SUPER_ADMIN`.
 - Non-superadmin callers should receive an authorization/business error.
@@ -476,6 +511,22 @@ Expected: HTTP `200`
 2. `POST {{BASE_URL}}/api/users/{{USER_ID}}/activate`
 
 Expected: HTTP `200`, `ApiResponse<Void>`
+
+#### A2.5 Permanently delete user (hard delete)
+`DELETE {{BASE_URL}}/api/users/{{USER_ID}}/permanent`
+
+Expected:
+- HTTP `200`
+- User is removed from both `user_db` and Keycloak realm
+
+#### A2.6 Reset register-created users safely (keep SUPER_ADMIN)
+`DELETE {{BASE_URL}}/api/users/reset/registered`
+
+Expected:
+- HTTP `200`
+- Response includes deleted/skipped counts
+- Only accounts created via public register flow are removed
+- `SUPER_ADMIN` is excluded automatically
 
 > Note: Some “self” checks in `UserController` compare the route `id` with JWT `sub`. In case “self” authorization fails, use admin role endpoints instead.
 
@@ -701,8 +752,8 @@ Expected:
 
 ### Scenario O8 (Negative): ADMIN_ORG can’t call SUPER_ADMIN-only analytics/payment verify restrictions (if any exist)
 Endpoints that are guarded by `hasAnyRole('SUPER_ADMIN','ADMIN_ORG')` should still pass for ADMIN_ORG.
-Verify the “most sensitive” admin endpoint you expect to be forbidden:
-- `POST {{BASE_URL}}/api/payments/verify/{{PAYMENT_PROVIDER_PAYMENT_ID}}`
+Verify the "most sensitive" admin endpoint you expect to be forbidden:
+- `GET {{BASE_URL}}/api/payments/verify/{{PAYMENT_PROVIDER_PAYMENT_ID}}`
 
 If you got `403`, confirm it is due to missing/invalid token or role mapping; if you got `200`, that means ADMIN_ORG is allowed (as per controller).
 

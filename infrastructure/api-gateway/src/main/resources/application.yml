@@ -28,7 +28,7 @@ spring:
         - id: event-service
           uri: lb://event-service
           predicates:
-            - Path=/api/events/**, /api/categories/**
+            - Path=/api/events/**, /api/ticket-categories/**, /api/promo-codes/**
 
         # Order Service Routes
         - id: order-service

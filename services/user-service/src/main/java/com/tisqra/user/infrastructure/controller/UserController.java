@@ -2,6 +2,8 @@ package com.tisqra.user.infrastructure.controller;
 
 import com.tisqra.common.ApiResponse;
 import com.tisqra.user.application.dto.CreateUserRequest;
+import com.tisqra.user.application.dto.ProvisionUserRequest;
+import com.tisqra.user.application.dto.ResetRegisteredUsersResponse;
 import com.tisqra.user.application.dto.UpdateUserRequest;
 import com.tisqra.user.application.dto.UserDTO;
 import com.tisqra.user.application.service.UserService;
@@ -36,6 +38,15 @@ public class UserController {
     @Operation(summary = "Create a new user")
     public ResponseEntity<ApiResponse<UserDTO>> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserDTO user = userService.createUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.<UserDTO>builder().success(true).data(user).build());
+    }
+
+    @PostMapping("/provision")
+    @Operation(summary = "Provision ADMIN_ORG/SCANNER/GUEST account with credentials")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<UserDTO>> provisionUser(@Valid @RequestBody ProvisionUserRequest request) {
+        UserDTO user = userService.provisionUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.<UserDTO>builder().success(true).data(user).build());
     }
@@ -95,6 +106,22 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable UUID id) {
         userService.activateUser(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
+    }
+
+    @DeleteMapping("/{id}/permanent")
+    @Operation(summary = "Permanently delete user account from app DB and Keycloak")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> permanentlyDeleteUser(@PathVariable UUID id) {
+        userService.permanentlyDeleteUser(id);
+        return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
+    }
+
+    @DeleteMapping("/reset/registered")
+    @Operation(summary = "Delete register-created users and clear cache (SUPER_ADMIN only)")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<ResetRegisteredUsersResponse>> resetRegisteredUsers() {
+        ResetRegisteredUsersResponse result = userService.resetRegisteredUsersPreservingSuperAdmin();
+        return ResponseEntity.ok(ApiResponse.<ResetRegisteredUsersResponse>builder().success(true).data(result).build());
     }
 
     @PostMapping("/{id}/verify-email")

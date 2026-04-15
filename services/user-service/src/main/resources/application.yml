@@ -102,3 +102,5 @@ logging:
 app:
   email-verification:
     base-url: ${EMAIL_VERIFICATION_BASE_URL:http://localhost:8080/api/auth/email/verify?token=}
+  password-reset:
+    base-url: ${PASSWORD_RESET_BASE_URL:http://localhost:8080/reset-password?token=}

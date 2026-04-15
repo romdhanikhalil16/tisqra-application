@@ -12,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,6 +74,29 @@ public class GlobalExceptionHandler {
                 .code("VALIDATION_FAILED")
                 .message("Input validation failed")
                 .details(details)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.<Void>builder()
+                        .success(false)
+                        .error(error)
+                        .build());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+        log.error("Type mismatch error: {}", ex.getMessage());
+
+        String parameterName = ex.getName() != null ? ex.getName() : "parameter";
+        Object value = ex.getValue();
+        String safeValue = value != null ? value.toString() : "null";
+
+        ErrorResponse error = ErrorResponse.builder()
+                .code("VALIDATION_FAILED")
+                .message("Invalid value '" + safeValue + "' for parameter '" + parameterName + "'")
+                .details(null)
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

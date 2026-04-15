@@ -4,11 +4,16 @@ import com.tisqra.common.enums.UserRole;
 import com.tisqra.common.exception.BusinessException;
 import com.tisqra.common.exception.ResourceNotFoundException;
 import com.tisqra.user.application.dto.CreateUserRequest;
+import com.tisqra.user.application.dto.ProvisionUserRequest;
+import com.tisqra.user.application.dto.ResetRegisteredUsersResponse;
 import com.tisqra.user.application.dto.UpdateUserRequest;
 import com.tisqra.user.application.dto.UserDTO;
 import com.tisqra.user.application.mapper.UserMapper;
+import com.tisqra.user.domain.model.AuditLog;
 import com.tisqra.user.domain.model.User;
+import com.tisqra.user.domain.repository.AuditLogRepository;
 import com.tisqra.user.domain.repository.UserRepository;
+import com.tisqra.user.infrastructure.keycloak.KeycloakAdminClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -18,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,8 +43,11 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final AuditLogRepository auditLogRepository;
     private final UserMapper userMapper;
     private final AuditLogService auditLogService;
+    private final KeycloakAdminClient keycloakAdminClient;
+    private final CacheManager cacheManager;
 
     @Transactional
     public UserDTO createUser(CreateUserRequest request) {
@@ -60,6 +69,44 @@ public class UserService {
             "User created with email: " + user.getEmail(), null, null);
 
         log.info("User created successfully with ID: {}", user.getId());
+        return userMapper.toDTO(user);
+    }
+
+    @Transactional
+    public UserDTO provisionUser(ProvisionUserRequest request) {
+        log.info("Provisioning managed user with email: {}", request.getEmail());
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new BusinessException("User with email " + request.getEmail() + " already exists");
+        }
+        if (request.getRole() == UserRole.SUPER_ADMIN) {
+            throw new BusinessException("Provisioning SUPER_ADMIN via API is not allowed");
+        }
+
+        String keycloakId = keycloakAdminClient.createUser(
+            request.getEmail(),
+            request.getEmail(),
+            request.getPassword(),
+            request.getFirstName(),
+            request.getLastName(),
+            request.getRole()
+        );
+
+        User user = User.builder()
+            .email(request.getEmail())
+            .keycloakId(keycloakId)
+            .firstName(request.getFirstName())
+            .lastName(request.getLastName())
+            .phone(request.getPhone())
+            .role(request.getRole())
+            .isActive(true)
+            .emailVerified(true)
+            .build();
+
+        user = userRepository.save(user);
+        auditLogService.logAction(user.getId(), "USER_PROVISIONED",
+            "User provisioned by SUPER_ADMIN with role: " + request.getRole(), null, null);
+
         return userMapper.toDTO(user);
     }
 
@@ -191,5 +238,55 @@ public class UserService {
             "Email verified successfully", null, null);
 
         log.info("Email verified for user: {}", id);
+    }
+
+    @Transactional
+    @CacheEvict(value = "users", key = "#id")
+    public void permanentlyDeleteUser(UUID id) {
+        log.info("Permanently deleting user with ID: {}", id);
+
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+
+        keycloakAdminClient.deleteUser(user.getKeycloakId());
+        userRepository.delete(user);
+
+        auditLogService.logAction(id, "USER_DELETED_PERMANENTLY",
+            "User permanently deleted from application database and Keycloak", null, null);
+
+        log.info("User permanently deleted: {}", id);
+    }
+
+    @Transactional
+    public ResetRegisteredUsersResponse resetRegisteredUsersPreservingSuperAdmin() {
+        int deleted = 0;
+        int skipped = 0;
+        for (AuditLog auditLog : auditLogRepository.findByAction("USER_REGISTERED")) {
+            User user = userRepository.findById(auditLog.getUserId()).orElse(null);
+            if (user == null) {
+                continue;
+            }
+            boolean isSuperAdmin = user.getRole() == UserRole.SUPER_ADMIN
+                || "admin@eventticketing.com".equalsIgnoreCase(user.getEmail());
+            if (isSuperAdmin) {
+                skipped++;
+                continue;
+            }
+
+            keycloakAdminClient.deleteUser(user.getKeycloakId());
+            auditLogRepository.deleteByUserId(user.getId());
+            userRepository.delete(user);
+            deleted++;
+        }
+
+        if (cacheManager.getCache("users") != null) {
+            cacheManager.getCache("users").clear();
+        }
+
+        log.info("Reset registered users completed: deleted={}, skipped={}", deleted, skipped);
+        return ResetRegisteredUsersResponse.builder()
+            .deletedCount(deleted)
+            .skippedCount(skipped)
+            .build();
     }
 }

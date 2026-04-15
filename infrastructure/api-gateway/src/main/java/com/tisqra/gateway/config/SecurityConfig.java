@@ -2,6 +2,7 @@ package com.tisqra.gateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -30,11 +31,16 @@ public class SecurityConfig {
                 .pathMatchers("/actuator/**").permitAll()
                 .pathMatchers("/eureka/**").permitAll()
                 .pathMatchers("/api/auth/**").permitAll()
-                .pathMatchers("/api/events/public/**").permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/events/upcoming").permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/events/search").permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/events/category/**").permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/events/slug/**").permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/events/*").permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/promo-codes/validate").permitAll()
                 .pathMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 // Protected endpoints
                 .pathMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
-                .pathMatchers("/api/organization/**").hasAnyRole("SUPER_ADMIN", "ADMIN_ORG")
+                .pathMatchers("/api/organization/**", "/api/organizations/**").hasAnyRole("SUPER_ADMIN", "ADMIN_ORG")
                 .pathMatchers("/api/scanner/**").hasAnyRole("SCANNER", "ADMIN_ORG")
                 .anyExchange().authenticated()
             )

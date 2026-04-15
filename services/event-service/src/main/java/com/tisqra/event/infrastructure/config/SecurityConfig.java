@@ -26,7 +26,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/api/events/upcoming", "/api/events/search", 
                                 "/api/events/category/**", "/api/events/{id}", 
-                                "/api/events/slug/**").permitAll()
+                                "/api/events/slug/**", "/api/promo-codes/validate").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));

@@ -1,5 +1,7 @@
 package com.tisqra.user.application.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tisqra.common.exception.BusinessException;
 import com.tisqra.common.enums.UserRole;
 import com.tisqra.user.application.dto.*;
@@ -16,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,6 +40,7 @@ public class AuthenticationService {
     private final AuditLogService auditLogService;
     private final EmailService emailService;
     private final TransactionTemplate transactionTemplate;
+    private final ObjectMapper objectMapper;
 
     /**
      * Registration: create Keycloak user, persist local user + token in a short DB transaction,
@@ -53,6 +59,9 @@ public class AuthenticationService {
             role = request.resolveRole();
         } catch (IllegalArgumentException ex) {
             throw new BusinessException(ex.getMessage());
+        }
+        if (role != UserRole.GUEST) {
+            throw new BusinessException("Public registration is only allowed for GUEST accounts");
         }
 
         final String username = Optional.ofNullable(request.getUsername())
@@ -119,17 +128,21 @@ public class AuthenticationService {
         final String normalizedEmail = normalizeEmail(request.getEmail());
         log.info("User login attempt: {}", normalizedEmail);
 
-        LoginResponse loginResponse = keycloakAdminClient.authenticate(
-            normalizedEmail,
-            request.getPassword()
-        );
-
         User user = userRepository.findByEmail(normalizedEmail)
-            .orElseThrow(() -> new BusinessException("Invalid credentials"));
+            .orElseGet(() -> provisionLocalUserFromCredentials(normalizedEmail, request.getPassword()));
 
         if (!user.getIsActive()) {
             throw new BusinessException("User account is deactivated");
         }
+        if (!Boolean.TRUE.equals(user.getEmailVerified())) {
+            throw new BusinessException("Please verify your email before logging in");
+        }
+
+        LoginResponse loginResponse = keycloakAdminClient.authenticate(
+            normalizedEmail,
+            request.getPassword()
+        );
+        log.debug("Token generated for {} with token_type={}", normalizedEmail, loginResponse.getTokenType());
 
         user.updateLastLogin();
         userRepository.save(user);
@@ -143,6 +156,34 @@ public class AuthenticationService {
     }
 
     @Transactional
+    public LoginResponse registerAndIssueToken(RegisterUserRequest request) {
+        UserDTO user = register(request);
+        LoginResponse response = null;
+        BusinessException lastAuthError = null;
+        for (int attempt = 1; attempt <= 5; attempt++) {
+            try {
+                response = keycloakAdminClient.authenticate(user.getEmail(), request.getPassword());
+                break;
+            } catch (BusinessException ex) {
+                lastAuthError = ex;
+                log.warn("Register token issue attempt {} failed for {}", attempt, user.getEmail());
+                try {
+                    Thread.sleep(350L * attempt);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+        if (response == null) {
+            throw lastAuthError != null ? lastAuthError : new BusinessException("Failed to issue access token after registration");
+        }
+        response.setUser(user);
+        log.debug("Issued register token for {} with token_type={}", user.getEmail(), response.getTokenType());
+        return response;
+    }
+
+    @Transactional
     public void requestPasswordReset(String email) {
         final String normalizedEmail = normalizeEmail(email);
         log.info("Password reset requested for email: {}", normalizedEmail);
@@ -150,7 +191,8 @@ public class AuthenticationService {
         User user = userRepository.findByEmail(normalizedEmail)
             .orElseThrow(() -> new BusinessException("User not found"));
 
-        keycloakAdminClient.generatePasswordResetToken(user.getKeycloakId());
+        String resetToken = keycloakAdminClient.generatePasswordResetToken(user.getKeycloakId());
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getFirstName(), resetToken);
 
         safeAudit(user.getId(), "PASSWORD_RESET_REQUESTED", "Password reset requested");
 
@@ -260,5 +302,79 @@ public class AuthenticationService {
             return null;
         }
         return email.trim().toLowerCase();
+    }
+
+    @Transactional
+    protected User provisionLocalUserFromAccessToken(String accessToken, String fallbackEmail) {
+        try {
+            String[] parts = accessToken.split("\\.");
+            if (parts.length < 2) {
+                throw new BusinessException("Invalid credentials");
+            }
+
+            byte[] payloadBytes = Base64.getUrlDecoder().decode(parts[1]);
+            Map<String, Object> claims = objectMapper.readValue(payloadBytes, new TypeReference<>() {});
+
+            String email = normalizeEmail((String) claims.getOrDefault("email", fallbackEmail));
+            if (email == null || email.isBlank()) {
+                throw new BusinessException("Invalid credentials");
+            }
+
+            String keycloakId = (String) claims.get("sub");
+            if (keycloakId == null || keycloakId.isBlank()) {
+                throw new BusinessException("Invalid credentials");
+            }
+
+            UserRole role = resolveRoleFromClaims(claims);
+            String firstName = (String) claims.getOrDefault("given_name", "User");
+            String lastName = (String) claims.getOrDefault("family_name", "Account");
+            boolean emailVerified = Boolean.TRUE.equals(claims.get("email_verified"));
+
+            User user = User.builder()
+                .email(email)
+                .keycloakId(keycloakId)
+                .firstName(firstName)
+                .lastName(lastName)
+                .phone(null)
+                .role(role)
+                .isActive(true)
+                .emailVerified(emailVerified)
+                .build();
+
+            return userRepository.save(user);
+        } catch (BusinessException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Failed to provision local user from access token", ex);
+            throw new BusinessException("Invalid credentials");
+        }
+    }
+
+    @Transactional
+    protected User provisionLocalUserFromCredentials(String email, String password) {
+        LoginResponse response = keycloakAdminClient.authenticate(email, password);
+        User user = provisionLocalUserFromAccessToken(response.getAccessToken(), email);
+        log.info("Provisioned local user from Keycloak login for {}", email);
+        return user;
+    }
+
+    @SuppressWarnings("unchecked")
+    private UserRole resolveRoleFromClaims(Map<String, Object> claims) {
+        Object realmAccess = claims.get("realm_access");
+        if (realmAccess instanceof Map<?, ?> realmAccessMap) {
+            Object rolesObj = realmAccessMap.get("roles");
+            if (rolesObj instanceof List<?> roles) {
+                if (roles.contains("SUPER_ADMIN")) {
+                    return UserRole.SUPER_ADMIN;
+                }
+                if (roles.contains("ADMIN_ORG")) {
+                    return UserRole.ADMIN_ORG;
+                }
+                if (roles.contains("SCANNER")) {
+                    return UserRole.SCANNER;
+                }
+            }
+        }
+        return UserRole.GUEST;
     }
 }

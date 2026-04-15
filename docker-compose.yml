@@ -44,6 +44,20 @@ services:
       retries: 5
 
   # ========================================
+  # Adminer (lightweight DB UI)
+  # ========================================
+  adminer:
+    image: adminer:4
+    container_name: tisqra-adminer
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    depends_on:
+      - postgres
+    networks:
+      - eventticket-network
+
+  # ========================================
   # MailHog (SMTP test inbox — dev only)
   # ========================================
   mailhog:

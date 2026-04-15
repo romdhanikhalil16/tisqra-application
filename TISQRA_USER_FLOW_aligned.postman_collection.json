@@ -28,7 +28,9 @@
     { "key": "VERIFY_TOKEN", "value": "" },
     { "key": "RESET_TOKEN", "value": "" },
     { "key": "EMAIL", "value": "guest@eventticketing.com" },
-    { "key": "NEW_PASSWORD", "value": "NewPass123!" }
+    { "key": "NEW_PASSWORD", "value": "NewPass123!" },
+    { "key": "MANAGED_USER_EMAIL", "value": "managed.user@example.com" },
+    { "key": "MANAGED_USER_PASSWORD", "value": "Managed123!" }
   ],
   "item": [
     {
@@ -49,8 +51,10 @@
                   "pm.test('Register returns 201', function () { pm.response.to.have.status(201); });",
                   "const j = pm.response.json();",
                   "pm.test('Register success', function () { pm.expect(j.success).to.be.true; });",
-                  "if (j.success && j.data && j.data.id) {",
-                  "  pm.collectionVariables.set('USER_ID', j.data.id);",
+                  "if (j.success && j.data) {",
+                  "  if (j.data.access_token) pm.collectionVariables.set('ACCESS_TOKEN', j.data.access_token);",
+                  "  if (j.data.user && j.data.user.id) pm.collectionVariables.set('USER_ID', j.data.user.id);",
+                  "  if (j.data.user && j.data.user.email) pm.collectionVariables.set('EMAIL', j.data.user.email);",
                   "}",
                   "// VERIFY_TOKEN is sent by email only — paste it from the link into collection variable VERIFY_TOKEN."
                 ]
@@ -132,7 +136,7 @@
                   "pm.test('Login returns 200', function () { pm.response.to.have.status(200); });",
                   "const j = pm.response.json();",
                   "if (j.success && j.data) {",
-                  "  if (j.data.accessToken) pm.collectionVariables.set('ACCESS_TOKEN', j.data.accessToken);",
+                  "  if (j.data.access_token) pm.collectionVariables.set('ACCESS_TOKEN', j.data.access_token);",
                   "  if (j.data.user && j.data.user.id) pm.collectionVariables.set('USER_ID', j.data.user.id);",
                   "  if (j.data.user && j.data.user.email) pm.collectionVariables.set('EMAIL', j.data.user.email);",
                   "}"
@@ -165,7 +169,7 @@
                   "pm.test('Login returns 200', function () { pm.response.to.have.status(200); });",
                   "const j = pm.response.json();",
                   "if (j.success && j.data) {",
-                  "  if (j.data.accessToken) pm.collectionVariables.set('ACCESS_TOKEN', j.data.accessToken);",
+                  "  if (j.data.access_token) pm.collectionVariables.set('ACCESS_TOKEN', j.data.access_token);",
                   "  if (j.data.user && j.data.user.id) pm.collectionVariables.set('USER_ID', j.data.user.id);",
                   "  if (j.data.user && j.data.user.email) pm.collectionVariables.set('EMAIL', j.data.user.email);",
                   "}"
@@ -240,6 +244,35 @@
               "path": ["api", "auth", "password", "reset"]
             }
           }
+        },
+        {
+          "name": "Register (negative - privileged role blocked)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Privileged public register is blocked (400)', function () { pm.response.to.have.status(400); });",
+                  "const j = pm.response.json();",
+                  "pm.test('Business rule violation returned', function () { pm.expect(j.success).to.eql(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"blocked.admin@example.com\",\n  \"email\": \"blocked.admin@example.com\",\n  \"password\": \"Admin12345!\",\n  \"firstName\": \"Blocked\",\n  \"lastName\": \"Admin\",\n  \"userRole\": \"SUPER_ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/register",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
         }
       ]
     },
@@ -262,6 +295,42 @@
               "raw": "{{BASE_URL}}/api/users",
               "host": ["{{BASE_URL}}"],
               "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Provision managed user (SUPER_ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Provision returns 201', function () { pm.response.to.have.status(201); });",
+                  "const j = pm.response.json();",
+                  "pm.test('Provision success', function () { pm.expect(j.success).to.be.true; });",
+                  "if (j.success && j.data) {",
+                  "  if (j.data.id) pm.collectionVariables.set('USER_ID', j.data.id);",
+                  "  if (j.data.email) pm.collectionVariables.set('MANAGED_USER_EMAIL', j.data.email);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{MANAGED_USER_EMAIL}}\",\n  \"password\": \"{{MANAGED_USER_PASSWORD}}\",\n  \"firstName\": \"Managed\",\n  \"lastName\": \"User\",\n  \"phone\": \"+21600000000\",\n  \"role\": \"SCANNER\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/users/provision",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "users", "provision"]
             }
           }
         },
@@ -378,6 +447,57 @@
               "raw": "{{BASE_URL}}/api/users/{{USER_ID}}/login",
               "host": ["{{BASE_URL}}"],
               "path": ["api", "users", "{{USER_ID}}", "login"]
+            }
+          }
+        },
+        {
+          "name": "Permanently delete user (SUPER_ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Permanent delete returns 200', function () { pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test('Permanent delete success', function () { pm.expect(j.success).to.be.true; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/api/users/{{USER_ID}}/permanent",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "users", "{{USER_ID}}", "permanent"]
+            }
+          }
+        },
+        {
+          "name": "Reset register-created users (SUPER_ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Reset registered users returns 200', function () { pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test('Reset registered users success', function () { pm.expect(j.success).to.be.true; });",
+                  "pm.test('Reset payload contains deletedCount', function () { pm.expect(j.data).to.have.property('deletedCount'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/api/users/reset/registered",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "users", "reset", "registered"]
             }
           }
         }

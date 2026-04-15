@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -17,4 +18,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     Page<AuditLog> findByUserId(UUID userId, Pageable pageable);
 
     Page<AuditLog> findByAction(String action, Pageable pageable);
+
+    List<AuditLog> findByAction(String action);
+
+    void deleteByUserId(UUID userId);
 }

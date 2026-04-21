@@ -11,7 +11,7 @@ class SplashScreen extends ConsumerWidget {
     final auth = ref.watch(authControllerProvider);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final target = auth.accessToken == null ? '/login' : '/app/home';
+      final target = (!auth.isAuthenticated || auth.isExpired) ? '/login' : '/app/home';
       final current = GoRouterState.of(context).uri.toString();
       if (current != target) {
         context.go(target);
@@ -28,7 +28,7 @@ class SplashScreen extends ConsumerWidget {
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
             Text(
-              auth.accessToken == null ? 'Checking session…' : 'Welcome back…',
+              (!auth.isAuthenticated || auth.isExpired) ? 'Checking session…' : 'Welcome back…',
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           ],

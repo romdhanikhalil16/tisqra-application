@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Authentication service - Handles user registration, login, and password management
@@ -33,6 +34,9 @@ import java.util.UUID;
 public class AuthenticationService {
 
     private static final long EMAIL_VERIFICATION_EXPIRATION_HOURS = 24L;
+    private static final int VERIFICATION_CODE_LENGTH = 6;
+    private static final int VERIFICATION_CODE_UPPER_BOUND = 1_000_000;
+    private static final int VERIFICATION_CODE_GENERATION_MAX_ATTEMPTS = 10;
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -109,7 +113,7 @@ public class AuthenticationService {
                 .emailVerified(false)
                 .build();
             user.issueVerificationToken(
-                UUID.randomUUID().toString(),
+                generateUniqueVerificationCode(),
                 LocalDateTime.now().plusHours(EMAIL_VERIFICATION_EXPIRATION_HOURS)
             );
             return userRepository.save(user);
@@ -265,7 +269,7 @@ public class AuthenticationService {
             }
 
             user.issueVerificationToken(
-                UUID.randomUUID().toString(),
+                generateUniqueVerificationCode(),
                 LocalDateTime.now().plusHours(EMAIL_VERIFICATION_EXPIRATION_HOURS)
             );
             return userRepository.save(user);
@@ -302,6 +306,19 @@ public class AuthenticationService {
             return null;
         }
         return email.trim().toLowerCase();
+    }
+
+    private String generateUniqueVerificationCode() {
+        for (int attempt = 1; attempt <= VERIFICATION_CODE_GENERATION_MAX_ATTEMPTS; attempt++) {
+            String candidate = String.format(
+                "%0" + VERIFICATION_CODE_LENGTH + "d",
+                ThreadLocalRandom.current().nextInt(0, VERIFICATION_CODE_UPPER_BOUND)
+            );
+            if (!userRepository.existsByVerificationToken(candidate)) {
+                return candidate;
+            }
+        }
+        throw new BusinessException("Failed to generate verification code, please try again");
     }
 
     @Transactional

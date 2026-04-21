@@ -37,9 +37,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _onSave() async {
     final auth = ref.read(authControllerProvider);
-    final userId = auth.userId;
     final token = auth.accessToken;
-    if (userId == null || token == null) return;
+    if (token == null) return;
 
     final name = _nameCtrl.text.trim();
     final parts = name.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
@@ -58,7 +57,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       final apiClient = ref.read(apiClientProvider);
       final resp = await apiClient.putApiResponseDynamic(
-        '/api/users/$userId',
+        '/api/users/me',
         bearerToken: token,
         body: {
           'firstName': firstName,
@@ -70,10 +69,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!resp.success) {
         throw Exception(resp.error?.message ?? 'Update failed');
       }
+      final data = resp.data as Map<String, dynamic>?;
+      final updatedFirst = data?['firstName']?.toString() ?? firstName;
+      final updatedLast = data?['lastName']?.toString() ?? lastName;
+      final updatedEmail = data?['email']?.toString();
+      final updatedName = '$updatedFirst $updatedLast'.trim();
+      await ref.read(authControllerProvider.notifier).updateLocalProfile(
+            name: updatedName,
+            email: updatedEmail,
+          );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profile updated')),
       );
-      // refresh session data by re-login if needed
       context.pop();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

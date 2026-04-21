@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:dio/dio.dart';
 import 'package:mobile/core/auth/token_storage.dart';
 import 'package:mobile/core/config/app_env.dart';
@@ -29,6 +28,7 @@ class AuthController extends StateNotifier<AuthState> {
   static const Set<String> _blockedRegularAuthRoles = {
     'SUPER_ADMIN',
     'ADMIN_ORG',
+    'SCANNER',
   };
 
   Future<void> initialize() async {
@@ -96,10 +96,14 @@ class AuthController extends StateNotifier<AuthState> {
     }
 
     final data = apiResponse.data as Map<String, dynamic>;
-    final accessToken = data['accessToken'] as String?;
-    final refreshToken = data['refreshToken'] as String?;
-    final tokenType = data['tokenType'] as String?;
-    final expiresIn = (data['expiresIn'] as num?)?.toInt();
+    final accessToken =
+        data['access_token'] as String? ?? data['accessToken'] as String?;
+    final refreshToken =
+        data['refresh_token'] as String? ?? data['refreshToken'] as String?;
+    final tokenType =
+        data['token_type'] as String? ?? data['tokenType'] as String?;
+    final expiresIn =
+        (data['expires_in'] as num?)?.toInt() ?? (data['expiresIn'] as num?)?.toInt();
 
     if (accessToken == null ||
         refreshToken == null ||
@@ -111,14 +115,8 @@ class AuthController extends StateNotifier<AuthState> {
     final expiresAtMs =
         DateTime.now().millisecondsSinceEpoch + expiresIn * 1000;
 
-    // Decode keycloak sub to map to user-service UUID.
-    final keycloakSub = JwtDecoder.decode(accessToken)['sub'] as String?;
-    if (keycloakSub == null || keycloakSub.isEmpty) {
-      throw Exception('Missing JWT subject (sub)');
-    }
-
     final userResp = await _apiClient.getApiResponse<Map<String, dynamic>>(
-      '/api/users/keycloak/$keycloakSub',
+      '/api/users/me',
       bearerToken: accessToken,
       dataParser: (json) => json as Map<String, dynamic>,
     );
@@ -218,6 +216,16 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> resendVerificationEmail({required String email}) async {
+    final apiResponse = await _apiClient.postApiResponseDynamic(
+      '/api/auth/email/resend-verification',
+      queryParameters: {'email': email},
+    );
+    if (!apiResponse.success) {
+      throw Exception(apiResponse.error?.message ?? 'Resend verification failed');
+    }
+  }
+
   Future<void> requestPasswordReset({required String email}) async {
     final apiResponse = await _apiClient.postApiResponseDynamic(
       '/api/auth/password/reset-request',
@@ -244,8 +252,46 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
+    final userId = state.userId;
+    final accessToken = state.accessToken;
+    if (userId != null && accessToken != null) {
+      try {
+        await _apiClient.postApiResponseDynamic(
+          '/api/auth/logout',
+          bearerToken: accessToken,
+          queryParameters: {'userId': userId},
+        );
+      } catch (_) {
+        // Keep local sign out resilient even if backend logout fails.
+      }
+    }
     await _tokenStorage.clear();
     state = const AuthState.unauthenticated();
+  }
+
+  Future<void> updateLocalProfile({
+    required String name,
+    String? email,
+  }) async {
+    final current = state;
+    if (current.accessToken == null || current.userId == null || current.userRole == null) return;
+
+    await _tokenStorage.saveUser(
+      userId: current.userId!,
+      email: email ?? current.userEmail ?? '',
+      name: name,
+      role: current.userRole!,
+    );
+
+    state = AuthState(
+      accessToken: current.accessToken,
+      refreshToken: current.refreshToken,
+      expiresAtMs: current.expiresAtMs,
+      userId: current.userId,
+      userEmail: email ?? current.userEmail,
+      userName: name,
+      userRole: current.userRole,
+    );
   }
 
   Future<_TokenRefreshResult?> _refreshTokens(String refreshToken) async {

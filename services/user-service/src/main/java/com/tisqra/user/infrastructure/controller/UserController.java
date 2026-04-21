@@ -36,6 +36,7 @@ public class UserController {
 
     @PostMapping
     @Operation(summary = "Create a new user")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<UserDTO>> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserDTO user = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -53,7 +54,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG') or #id == authentication.principal.claims['sub']")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
     public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable UUID id) {
         UserDTO user = userService.getUserById(id);
         return ResponseEntity.ok(ApiResponse.<UserDTO>builder().success(true).data(user).build());
@@ -69,8 +70,16 @@ public class UserController {
 
     @GetMapping("/keycloak/{keycloakId}")
     @Operation(summary = "Get user by Keycloak ID")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
     public ResponseEntity<ApiResponse<UserDTO>> getUserByKeycloakId(@PathVariable String keycloakId) {
         UserDTO user = userService.getUserByKeycloakId(keycloakId);
+        return ResponseEntity.ok(ApiResponse.<UserDTO>builder().success(true).data(user).build());
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current authenticated user")
+    public ResponseEntity<ApiResponse<UserDTO>> getCurrentUser() {
+        UserDTO user = userService.getCurrentUser();
         return ResponseEntity.ok(ApiResponse.<UserDTO>builder().success(true).data(user).build());
     }
 
@@ -84,11 +93,18 @@ public class UserController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update user profile")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG') or #id == authentication.principal.claims['sub']")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
     public ResponseEntity<ApiResponse<UserDTO>> updateUser(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateUserRequest request) {
         UserDTO user = userService.updateUser(id, request);
+        return ResponseEntity.ok(ApiResponse.<UserDTO>builder().success(true).data(user).build());
+    }
+
+    @PutMapping("/me")
+    @Operation(summary = "Update current authenticated user profile")
+    public ResponseEntity<ApiResponse<UserDTO>> updateCurrentUser(@Valid @RequestBody UpdateUserRequest request) {
+        UserDTO user = userService.updateCurrentUser(request);
         return ResponseEntity.ok(ApiResponse.<UserDTO>builder().success(true).data(user).build());
     }
 
@@ -126,6 +142,7 @@ public class UserController {
 
     @PostMapping("/{id}/verify-email")
     @Operation(summary = "Verify user email")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@PathVariable UUID id) {
         userService.verifyEmail(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
@@ -133,6 +150,7 @@ public class UserController {
 
     @PostMapping("/{id}/login")
     @Operation(summary = "Record user login")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> recordLogin(@PathVariable UUID id) {
         userService.recordLogin(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());

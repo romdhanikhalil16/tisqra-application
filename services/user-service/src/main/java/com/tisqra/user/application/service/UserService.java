@@ -153,6 +153,17 @@ public class UserService {
         return userMapper.toDTO(user);
     }
 
+    public UserDTO getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
+            throw new BusinessException("Authentication is required");
+        }
+        String keycloakId = jwt.getSubject();
+        User user = userRepository.findByKeycloakId(keycloakId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "keycloakId", keycloakId));
+        return userMapper.toDTO(user);
+    }
+
     public Page<UserDTO> getAllUsers(Pageable pageable) {
         log.debug("Fetching all users with pagination");
         return userRepository.findAll(pageable).map(userMapper::toDTO);
@@ -173,6 +184,22 @@ public class UserService {
             "User profile updated", null, null);
 
         log.info("User updated successfully: {}", id);
+        return userMapper.toDTO(user);
+    }
+
+    @Transactional
+    public UserDTO updateCurrentUser(UpdateUserRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
+            throw new BusinessException("Authentication is required");
+        }
+        User user = userRepository.findByKeycloakId(jwt.getSubject())
+            .orElseThrow(() -> new ResourceNotFoundException("User", "keycloakId", jwt.getSubject()));
+
+        userMapper.updateEntityFromDTO(request, user);
+        user = userRepository.save(user);
+
+        auditLogService.logAction(user.getId(), "USER_UPDATED", "User profile updated", null, null);
         return userMapper.toDTO(user);
     }
 

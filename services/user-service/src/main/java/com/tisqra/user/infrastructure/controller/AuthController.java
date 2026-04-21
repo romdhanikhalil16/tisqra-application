@@ -27,10 +27,10 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new user (Gmail signup)")
-    public ResponseEntity<ApiResponse<LoginResponse>> register(@Valid @RequestBody RegisterUserRequest request) {
-        LoginResponse user = authenticationService.registerAndIssueToken(request);
+    public ResponseEntity<ApiResponse<UserDTO>> register(@Valid @RequestBody RegisterUserRequest request) {
+        UserDTO user = authenticationService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.<LoginResponse>builder().success(true).data(user).build());
+            .body(ApiResponse.<UserDTO>builder().success(true).data(user).build());
     }
 
     @PostMapping("/login")

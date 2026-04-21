@@ -40,7 +40,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authState = ref.read(authControllerProvider);
 
-      final isLoggedIn = authState.accessToken != null;
+      final isLoggedIn = authState.isAuthenticated && !authState.isExpired;
       final path = state.matchedLocation;
 
       final isPublic = path == '/' ||
@@ -58,6 +58,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (!isLoggedIn && !isPublic) return '/login';
       if (isLoggedIn && isAuthRoute) return '/app/home';
+
+      if (isLoggedIn && authState.userRole == 'SCANNER' && path.startsWith('/app')) {
+        return '/unauthorized';
+      }
       return null;
     },
     routes: [
@@ -84,6 +88,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reset-password',
         builder: (context, state) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/unauthorized',
+        builder: (context, state) => const _UnauthorizedScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
@@ -167,4 +175,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 });
 
 class GoRouterRefreshNotifier extends ChangeNotifier {}
+
+class _UnauthorizedScreen extends StatelessWidget {
+  const _UnauthorizedScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Unauthorized')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.lock_outline, size: 56),
+              const SizedBox(height: 12),
+              const Text('This account is not allowed to access this app.'),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () => context.go('/login'),
+                child: const Text('Back to login'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 

@@ -25,7 +25,7 @@ public interface TicketCategoryMapper {
     @Mapping(target = "event", ignore = true)
     @Mapping(target = "soldCount", ignore = true)
     @Mapping(target = "reservedCount", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "crea tedAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     TicketCategory toEntity(CreateTicketCategoryRequest request);
 }

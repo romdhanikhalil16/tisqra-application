@@ -71,11 +71,27 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   }
 
   Future<void> _onResend() async {
-    // Backend currently doesn't expose "resend verification" endpoint in this repo.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Resend verification is not implemented yet.')),
-    );
-    _startTimer();
+    final emailFromQuery = GoRouterState.of(context).uri.queryParameters['email'];
+    final email = emailFromQuery ?? ref.read(authControllerProvider).userEmail;
+    if (email == null || email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email is missing. Please register again.')),
+      );
+      return;
+    }
+    try {
+      await ref.read(authControllerProvider.notifier).resendVerificationEmail(email: email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Verification code sent. Check your inbox.')),
+      );
+      _startTimer();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
   }
 
   @override

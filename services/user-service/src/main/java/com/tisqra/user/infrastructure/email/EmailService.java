@@ -42,9 +42,10 @@ public class EmailService {
             helper.setSubject("Verify your TISQRA account");
             helper.setText(
                 "Hi " + displayName + ",\n\n"
-                    + "Welcome to TISQRA. Please verify your email by opening the link below:\n"
+                    + "Welcome to TISQRA. Your verification code is: " + verificationToken + "\n\n"
+                    + "Use this 6-digit code in the verification endpoint, or open the link below:\n"
                     + verificationLink + "\n\n"
-                    + "This link expires in 24 hours.\n\n"
+                    + "The code/link expires in 24 hours.\n\n"
                     + "If you did not create this account, please ignore this email.\n",
                 false
             );

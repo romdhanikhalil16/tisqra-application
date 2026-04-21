@@ -89,7 +89,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             lastName: lastName,
           );
       if (!mounted) return;
-      context.go('/verify');
+      context.go('/verify?email=$email');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -9,12 +9,16 @@ Use it with:
 ## 1) Test Environment Baseline
 
 - Start infra and services with `docker-compose.yml`.
+- After backend code changes, rebuild and restart only the affected service before retesting:
+  - `docker compose up -d --build <service-name>`
+  - Example: `docker compose up -d --build user-service`
 - Ensure these core endpoints are healthy:
   - `GET {{BASE_URL}}/actuator/health` -> `200`
   - `GET http://localhost:8761/actuator/health` -> `200`
   - `GET http://localhost:8888/actuator/health` -> `200`
 - Verify Keycloak realm is loaded and seeded users can login.
-- Use MailHog (`http://localhost:8025`) for verification and reset emails.
+- Use MailHog (`http://localhost:8025`) for verification and reset emails (SMTP sink in local Docker).
+- After restarting auth-related services, run login again to get a fresh `ACCESS_TOKEN` before calling protected endpoints.
 
 ## 2) Required Postman Variables
 
@@ -29,6 +33,10 @@ Set before running:
 - `PAYMENT_ID`, `PAYMENT_PROVIDER_PAYMENT_ID`
 - `TICKET_ID`, `QR_CODE`, `SCANNER_ID`
 - `NOTIFICATION_ID`, `START_DATE`, `END_DATE`
+
+Email verification token format:
+- Registration/resend now sends a **6-digit numeric code** via SMTP email.
+- Put that code in `VERIFY_TOKEN` (or paste the full verify link; backend normalizes either).
 
 ## 3) Execution Order (Critical)
 
@@ -113,3 +121,11 @@ Backend is considered stable when:
 - Deletion checks pass in API + DB + identity provider.
 - Gateway routes and auth behavior match documentation.
 
+
+
+%
+{
+  "email": "admin@eventticketing.com",
+  "password": "admin123"
+}
+%

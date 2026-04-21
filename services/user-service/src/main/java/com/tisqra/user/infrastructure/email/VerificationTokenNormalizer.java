@@ -33,9 +33,9 @@ public final class VerificationTokenNormalizer {
             }
         }
         try {
-            return URLDecoder.decode(t, StandardCharsets.UTF_8).trim();
+            return URLDecoder.decode(t, StandardCharsets.UTF_8).replace(" ", "").trim();
         } catch (Exception e) {
-            return t.trim();
+            return t.replace(" ", "").trim();
         }
     }
 }

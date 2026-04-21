@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "TISQRA Platform - API Collection (Aligned)",
-    "description": "Clean Postman collection aligned with current controller endpoints and DTO request fields. Use {{BASE_URL}} as API Gateway base.\n\nRecommended auth order: Register → Verify email (paste full link or raw token into {{VERIFY_TOKEN}}) → Login → Logout.\n\nDocker dev: MailHog UI at http://localhost:8025 — open the verification message, copy the token query value into {{VERIFY_TOKEN}}. Resend uses {{EMAIL}} (set by Register test script).\n\nProduction: set EMAIL_HOST/PORT/USER/PASS (and EMAIL_SMTP_AUTH=true, EMAIL_SMTP_STARTTLS=true for TLS providers).",
+    "name": "TISQRA Platform - API Collection",
+    "description": "Clean Postman collection aligned with current controller endpoints and DTO request fields. Use {{BASE_URL}} as API Gateway base.\n\nRecommended auth order: Register → Verify email (paste 6-digit code or full link into {{VERIFY_TOKEN}}) → Login → Logout.\n\nDocker dev: MailHog UI at http://localhost:8025 — open the verification message, copy the 6-digit verification code into {{VERIFY_TOKEN}}. Resend uses {{EMAIL}} (set by Register test script).\n\nProduction: set EMAIL_HOST/PORT/USER/PASS (and EMAIL_SMTP_AUTH=true, EMAIL_SMTP_STARTTLS=true for TLS providers).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -52,11 +52,12 @@
                   "const j = pm.response.json();",
                   "pm.test('Register success', function () { pm.expect(j.success).to.be.true; });",
                   "if (j.success && j.data) {",
-                  "  if (j.data.access_token) pm.collectionVariables.set('ACCESS_TOKEN', j.data.access_token);",
                   "  if (j.data.user && j.data.user.id) pm.collectionVariables.set('USER_ID', j.data.user.id);",
-                  "  if (j.data.user && j.data.user.email) pm.collectionVariables.set('EMAIL', j.data.user.email);",
+                  "  if (j.data.id) pm.collectionVariables.set('USER_ID', j.data.id);",
+                  "  if (j.data.email) pm.collectionVariables.set('EMAIL', j.data.email);",
                   "}",
-                  "// VERIFY_TOKEN is sent by email only — paste it from the link into collection variable VERIFY_TOKEN."
+                  "// Register does not issue auth tokens; verify email then call Login.",
+                  "// VERIFY_TOKEN is sent by email only — paste the 6-digit code (or full verify link) into collection variable VERIFY_TOKEN."
                 ]
               }
             }
@@ -76,7 +77,7 @@
           }
         },
         {
-          "name": "Verify email (token)",
+          "name": "Verify email (6-digit code/token)",
           "event": [
             {
               "listen": "test",

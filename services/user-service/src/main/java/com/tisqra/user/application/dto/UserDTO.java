@@ -22,6 +22,7 @@ public class UserDTO {
     private String firstName;
     private String lastName;
     private String phone;
+    private UUID organizationId;
     private UserRole role;
     private Boolean isActive;
     private Boolean emailVerified;

@@ -31,16 +31,20 @@ class ApiClient {
     String? bearerToken,
     required T Function(dynamic json) dataParser,
   }) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      path,
-      queryParameters: queryParameters,
-      options: Options(headers: _buildAuthHeaders(bearerToken)),
-    );
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        path,
+        queryParameters: queryParameters,
+        options: Options(headers: _buildAuthHeaders(bearerToken)),
+      );
 
-    return ApiResponse.fromJson(
-      response.data ?? const <String, dynamic>{},
-      dataParser: dataParser,
-    );
+      return ApiResponse.fromJson(
+        response.data ?? const <String, dynamic>{},
+        dataParser: dataParser,
+      );
+    } on DioException catch (e) {
+      return _handleDioError<T>(e, dataParser: dataParser);
+    }
   }
 
   Future<ApiResponse<T>> postApiResponse<T>(
@@ -50,17 +54,21 @@ class ApiClient {
     String? bearerToken,
     required T Function(dynamic json) dataParser,
   }) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      path,
-      data: body,
-      queryParameters: queryParameters,
-      options: Options(headers: _buildAuthHeaders(bearerToken)),
-    );
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        path,
+        data: body,
+        queryParameters: queryParameters,
+        options: Options(headers: _buildAuthHeaders(bearerToken)),
+      );
 
-    return ApiResponse.fromJson(
-      response.data ?? const <String, dynamic>{},
-      dataParser: dataParser,
-    );
+      return ApiResponse.fromJson(
+        response.data ?? const <String, dynamic>{},
+        dataParser: dataParser,
+      );
+    } on DioException catch (e) {
+      return _handleDioError<T>(e, dataParser: dataParser);
+    }
   }
 
   Future<ApiResponse<dynamic>> postApiResponseDynamic(
@@ -69,14 +77,18 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     String? bearerToken,
   }) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      path,
-      data: body,
-      queryParameters: queryParameters,
-      options: Options(headers: _buildAuthHeaders(bearerToken)),
-    );
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        path,
+        data: body,
+        queryParameters: queryParameters,
+        options: Options(headers: _buildAuthHeaders(bearerToken)),
+      );
 
-    return ApiResponse.fromJson(response.data ?? const <String, dynamic>{});
+      return ApiResponse.fromJson(response.data ?? const <String, dynamic>{});
+    } on DioException catch (e) {
+      return _handleDioError<dynamic>(e);
+    }
   }
 
   Future<Map<String, dynamic>> getJson(
@@ -104,15 +116,19 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     String? bearerToken,
   }) async {
-    final response = await _dio.delete<Map<String, dynamic>>(
-      path,
-      queryParameters: queryParameters,
-      options: Options(headers: _buildAuthHeaders(bearerToken)),
-    );
+    try {
+      final response = await _dio.delete<Map<String, dynamic>>(
+        path,
+        queryParameters: queryParameters,
+        options: Options(headers: _buildAuthHeaders(bearerToken)),
+      );
 
-    return ApiResponse.fromJson(
-      response.data ?? const <String, dynamic>{},
-    );
+      return ApiResponse.fromJson(
+        response.data ?? const <String, dynamic>{},
+      );
+    } on DioException catch (e) {
+      return _handleDioError<dynamic>(e);
+    }
   }
 
   Future<ApiResponse<dynamic>> putApiResponseDynamic(
@@ -121,15 +137,46 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     String? bearerToken,
   }) async {
-    final response = await _dio.put<Map<String, dynamic>>(
-      path,
-      data: body,
-      queryParameters: queryParameters,
-      options: Options(headers: _buildAuthHeaders(bearerToken)),
-    );
+    try {
+      final response = await _dio.put<Map<String, dynamic>>(
+        path,
+        data: body,
+        queryParameters: queryParameters,
+        options: Options(headers: _buildAuthHeaders(bearerToken)),
+      );
 
-    return ApiResponse.fromJson(
-      response.data ?? const <String, dynamic>{},
+      return ApiResponse.fromJson(
+        response.data ?? const <String, dynamic>{},
+      );
+    } on DioException catch (e) {
+      return _handleDioError<dynamic>(e);
+    }
+  }
+
+  ApiResponse<T> _handleDioError<T>(DioException e, {T Function(dynamic)? dataParser}) {
+    if (e.response?.data != null && e.response!.data is Map<String, dynamic>) {
+      try {
+        return ApiResponse.fromJson(
+          e.response!.data as Map<String, dynamic>,
+          dataParser: dataParser,
+        );
+      } catch (_) {}
+    }
+    
+    // Provide a more human readable error for connection refused/timeout
+    String msg = e.message ?? 'Unknown error';
+    if (e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout) {
+      msg = 'Unable to connect to server. Please check your internet connection or server IP.';
+    }
+
+    return ApiResponse(
+      success: false,
+      data: null,
+      error: ApiErrorResponse(
+        code: e.response?.statusCode?.toString() ?? 'NETWORK_ERROR',
+        message: msg,
+        details: null,
+      ),
     );
   }
 }

@@ -16,6 +16,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
   final _email = TextEditingController();
+  final _phone = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
   bool _terms = false;
@@ -28,6 +29,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _firstName.dispose();
     _lastName.dispose();
     _email.dispose();
+    _phone.dispose();
     _password.dispose();
     _confirm.dispose();
     super.dispose();
@@ -62,13 +64,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final firstName = _firstName.text.trim();
     final lastName = _lastName.text.trim();
     final email = _email.text.trim();
+    final phone = _phone.text.trim().isEmpty ? null : _phone.text.trim();
     final password = _password.text;
     final confirm = _confirm.text;
 
     String? error;
     if (firstName.isEmpty) error = 'First name is required';
     if (error == null && lastName.isEmpty) error = 'Last name is required';
-    if (error == null && !email.contains('@')) error = 'Enter a valid email';
+    
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (error == null && !emailRegex.hasMatch(email)) error = 'Enter a valid email';
+    
+    if (error == null && phone != null && !RegExp(r'^\+?[1-9]\d{1,14}$').hasMatch(phone)) {
+      error = 'Enter a valid phone number';
+    }
+
     if (error == null && password.length < 8) error = 'Password must be 8+ chars';
     if (error == null && password != confirm) error = 'Passwords do not match';
     if (error == null && !_terms) error = 'Please accept the terms & conditions';
@@ -87,6 +97,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password: password,
             firstName: firstName,
             lastName: lastName,
+            phone: phone,
           );
       if (!mounted) return;
       context.go('/verify?email=$email');
@@ -146,6 +157,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   label: 'Email',
                   hint: 'john@example.com',
                   keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: _phone,
+                  label: 'Phone (optional)',
+                  hint: '+216...',
+                  keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 12),
                 TextField(

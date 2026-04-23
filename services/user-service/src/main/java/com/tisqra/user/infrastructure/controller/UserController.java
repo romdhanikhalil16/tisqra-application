@@ -45,7 +45,7 @@ public class UserController {
 
     @PostMapping("/provision")
     @Operation(summary = "Provision ADMIN_ORG/SCANNER/GUEST account with credentials")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
     public ResponseEntity<ApiResponse<UserDTO>> provisionUser(@Valid @RequestBody ProvisionUserRequest request) {
         UserDTO user = userService.provisionUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -70,7 +70,7 @@ public class UserController {
 
     @GetMapping("/keycloak/{keycloakId}")
     @Operation(summary = "Get user by Keycloak ID")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<UserDTO>> getUserByKeycloakId(@PathVariable String keycloakId) {
         UserDTO user = userService.getUserByKeycloakId(keycloakId);
         return ResponseEntity.ok(ApiResponse.<UserDTO>builder().success(true).data(user).build());
@@ -110,7 +110,7 @@ public class UserController {
 
     @PostMapping("/{id}/deactivate")
     @Operation(summary = "Deactivate user account")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
     public ResponseEntity<ApiResponse<Void>> deactivateUser(@PathVariable UUID id) {
         userService.deactivateUser(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());
@@ -118,7 +118,7 @@ public class UserController {
 
     @PostMapping("/{id}/activate")
     @Operation(summary = "Activate user account")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_ORG')")
     public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable UUID id) {
         userService.activateUser(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).data(null).build());

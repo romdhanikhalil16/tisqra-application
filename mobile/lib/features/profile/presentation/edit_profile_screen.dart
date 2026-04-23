@@ -53,6 +53,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       return;
     }
 
+    if (phone != null && !RegExp(r'^\+?[1-9]\d{1,14}$').hasMatch(phone)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid phone number (e.g., +216...)')),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
     try {
       final apiClient = ref.read(apiClientProvider);

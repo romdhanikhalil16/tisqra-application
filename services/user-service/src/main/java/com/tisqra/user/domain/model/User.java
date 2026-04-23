@@ -48,6 +48,9 @@ public class User {
     @Column(length = 20)
     private String phone;
 
+    @Column
+    private UUID organizationId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private UserRole role;

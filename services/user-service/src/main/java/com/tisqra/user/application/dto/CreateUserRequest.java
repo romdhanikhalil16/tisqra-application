@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 /**
  * Request DTO for creating a new user
  */
@@ -32,6 +34,8 @@ public class CreateUserRequest {
     private String lastName;
 
     private String phone;
+
+    private UUID organizationId;
 
     @NotNull(message = "Role is required")
     private UserRole role;

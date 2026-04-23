@@ -52,7 +52,7 @@ public class UserService {
     @Transactional
     public UserDTO createUser(CreateUserRequest request) {
         log.info("Creating new user with email: {}", request.getEmail());
-        validateAdminOrgCreationAccess(request.getRole());
+        validateSuperAdminForRestrictedRoles(request.getRole());
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException("User with email " + request.getEmail() + " already exists");
@@ -75,13 +75,21 @@ public class UserService {
     @Transactional
     public UserDTO provisionUser(ProvisionUserRequest request) {
         log.info("Provisioning managed user with email: {}", request.getEmail());
+        User actor = getCurrentActor();
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException("User with email " + request.getEmail() + " already exists");
         }
-        if (request.getRole() == UserRole.SUPER_ADMIN) {
-            throw new BusinessException("Provisioning SUPER_ADMIN via API is not allowed");
+        if (isAdminOrg(actor)) {
+            if (!(request.getRole() == UserRole.SCANNER || request.getRole() == UserRole.GUEST)) {
+                throw new BusinessException("ADMIN_ORG can only provision SCANNER or GUEST users");
+            }
+        } else if (!isSuperAdmin(actor)) {
+            throw new BusinessException("Only SUPER_ADMIN or ADMIN_ORG can provision users");
         }
+
+        validateSuperAdminForRestrictedRoles(request.getRole());
+        UUID organizationId = resolveProvisionOrganizationId(actor, request.getOrganizationId(), request.getRole());
 
         String keycloakId = keycloakAdminClient.createUser(
             request.getEmail(),
@@ -98,6 +106,7 @@ public class UserService {
             .firstName(request.getFirstName())
             .lastName(request.getLastName())
             .phone(request.getPhone())
+            .organizationId(organizationId)
             .role(request.getRole())
             .isActive(true)
             .emailVerified(true)
@@ -110,39 +119,41 @@ public class UserService {
         return userMapper.toDTO(user);
     }
 
-    private void validateAdminOrgCreationAccess(UserRole targetRole) {
-        if (targetRole != UserRole.ADMIN_ORG) {
+    private void validateSuperAdminForRestrictedRoles(UserRole targetRole) {
+        if (targetRole != UserRole.ADMIN_ORG && targetRole != UserRole.SUPER_ADMIN) {
             return;
         }
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
-            throw new BusinessException("Only SUPER_ADMIN can create ADMIN_ORG accounts");
-        }
-
-        Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
-        Object rolesObj = realmAccess == null ? null : realmAccess.get("roles");
-        Collection<?> roles = rolesObj instanceof Collection<?> c ? c : Collections.emptyList();
-        boolean isSuperAdmin = roles.stream().anyMatch(role -> "SUPER_ADMIN".equals(String.valueOf(role)));
-
-        if (!isSuperAdmin) {
-            throw new BusinessException("Only SUPER_ADMIN can create ADMIN_ORG accounts");
+        User actor = getCurrentActor();
+        if (!isSuperAdmin(actor)) {
+            throw new BusinessException("Only SUPER_ADMIN can create ADMIN_ORG or SUPER_ADMIN accounts");
         }
     }
 
     @Cacheable(value = "users", key = "#id")
     public UserDTO getUserById(UUID id) {
         log.debug("Fetching user by ID: {}", id);
+        User actor = getCurrentActor();
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        ensureAdminOrgCanAccessUser(actor, user);
         return userMapper.toDTO(user);
     }
 
     @Cacheable(value = "users", key = "#email")
     public UserDTO getUserByEmail(String email) {
         log.debug("Fetching user by email: {}", email);
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+        User actor = getCurrentActor();
+        User user;
+        if (isAdminOrg(actor)) {
+            if (actor.getOrganizationId() == null) {
+                throw new BusinessException("ADMIN_ORG user is not linked to an organization");
+            }
+            user = userRepository.findByEmailAndOrganizationId(email, actor.getOrganizationId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+        } else {
+            user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+        }
         return userMapper.toDTO(user);
     }
 
@@ -166,16 +177,28 @@ public class UserService {
 
     public Page<UserDTO> getAllUsers(Pageable pageable) {
         log.debug("Fetching all users with pagination");
-        return userRepository.findAll(pageable).map(userMapper::toDTO);
+        User actor = getCurrentActor();
+        if (isSuperAdmin(actor)) {
+            return userRepository.findAll(pageable).map(userMapper::toDTO);
+        }
+        if (isAdminOrg(actor)) {
+            if (actor.getOrganizationId() == null) {
+                throw new BusinessException("ADMIN_ORG user is not linked to an organization");
+            }
+            return userRepository.findByOrganizationId(actor.getOrganizationId(), pageable).map(userMapper::toDTO);
+        }
+        throw new BusinessException("You do not have permission to list users");
     }
 
     @Transactional
     @CacheEvict(value = "users", key = "#id")
     public UserDTO updateUser(UUID id, UpdateUserRequest request) {
         log.info("Updating user with ID: {}", id);
+        User actor = getCurrentActor();
 
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        ensureAdminOrgCanManageUser(actor, user);
 
         userMapper.updateEntityFromDTO(request, user);
         user = userRepository.save(user);
@@ -207,9 +230,12 @@ public class UserService {
     @CacheEvict(value = "users", key = "#id")
     public void deactivateUser(UUID id) {
         log.info("Deactivating user with ID: {}", id);
+        User actor = getCurrentActor();
 
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        ensureAdminOrgCanManageUser(actor, user);
+        ensureLastSuperAdminSafety(user, false);
 
         user.deactivate();
         userRepository.save(user);
@@ -224,9 +250,11 @@ public class UserService {
     @CacheEvict(value = "users", key = "#id")
     public void activateUser(UUID id) {
         log.info("Activating user with ID: {}", id);
+        User actor = getCurrentActor();
 
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        ensureAdminOrgCanManageUser(actor, user);
 
         user.activate();
         userRepository.save(user);
@@ -271,9 +299,14 @@ public class UserService {
     @CacheEvict(value = "users", key = "#id")
     public void permanentlyDeleteUser(UUID id) {
         log.info("Permanently deleting user with ID: {}", id);
+        User actor = getCurrentActor();
+        if (!isSuperAdmin(actor)) {
+            throw new BusinessException("Only SUPER_ADMIN can permanently delete users");
+        }
 
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        ensureLastSuperAdminSafety(user, true);
 
         keycloakAdminClient.deleteUser(user.getKeycloakId());
         userRepository.delete(user);
@@ -315,5 +348,77 @@ public class UserService {
             .deletedCount(deleted)
             .skippedCount(skipped)
             .build();
+    }
+
+    private UUID resolveProvisionOrganizationId(User actor, UUID requestedOrganizationId, UserRole targetRole) {
+        if (isAdminOrg(actor)) {
+            if (actor.getOrganizationId() == null) {
+                throw new BusinessException("ADMIN_ORG user is not linked to an organization");
+            }
+            return actor.getOrganizationId();
+        }
+        if (targetRole == UserRole.GUEST) {
+            return requestedOrganizationId;
+        }
+        if ((targetRole == UserRole.SCANNER || targetRole == UserRole.ADMIN_ORG) && requestedOrganizationId == null) {
+            throw new BusinessException("organizationId is required for SCANNER and ADMIN_ORG provisioning");
+        }
+        return requestedOrganizationId;
+    }
+
+    private User getCurrentActor() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
+            throw new BusinessException("Authentication is required");
+        }
+        return userRepository.findByKeycloakId(jwt.getSubject())
+            .orElseThrow(() -> new ResourceNotFoundException("User", "keycloakId", jwt.getSubject()));
+    }
+
+    private boolean isSuperAdmin(User user) {
+        return user.getRole() == UserRole.SUPER_ADMIN;
+    }
+
+    private boolean isAdminOrg(User user) {
+        return user.getRole() == UserRole.ADMIN_ORG;
+    }
+
+    private void ensureAdminOrgCanAccessUser(User actor, User target) {
+        if (!isAdminOrg(actor)) {
+            return;
+        }
+        if (actor.getOrganizationId() == null) {
+            throw new BusinessException("ADMIN_ORG user is not linked to an organization");
+        }
+        if (!actor.getOrganizationId().equals(target.getOrganizationId())) {
+            throw new ResourceNotFoundException("User", "id", target.getId());
+        }
+    }
+
+    private void ensureAdminOrgCanManageUser(User actor, User target) {
+        if (!isAdminOrg(actor)) {
+            return;
+        }
+        if (actor.getOrganizationId() == null) {
+            throw new BusinessException("ADMIN_ORG user is not linked to an organization");
+        }
+        if (!actor.getOrganizationId().equals(target.getOrganizationId())) {
+            throw new ResourceNotFoundException("User", "id", target.getId());
+        }
+        if (target.getRole() != UserRole.SCANNER && target.getRole() != UserRole.GUEST) {
+            throw new BusinessException("ADMIN_ORG can only manage SCANNER and GUEST users");
+        }
+    }
+
+    private void ensureLastSuperAdminSafety(User target, boolean deleting) {
+        if (target.getRole() != UserRole.SUPER_ADMIN || !Boolean.TRUE.equals(target.getIsActive())) {
+            return;
+        }
+        long activeSuperAdmins = userRepository.countByRoleAndIsActiveTrue(UserRole.SUPER_ADMIN);
+        if (activeSuperAdmins <= 1) {
+            throw new BusinessException(deleting
+                ? "Cannot delete the only active SUPER_ADMIN"
+                : "Cannot deactivate the only active SUPER_ADMIN");
+        }
     }
 }

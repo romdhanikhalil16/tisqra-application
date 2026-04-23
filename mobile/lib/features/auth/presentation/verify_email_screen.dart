@@ -17,11 +17,13 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   bool _loading = false;
   Timer? _timer;
   int _secondsLeft = 30;
+  bool _autoVerified = false;
 
   @override
   void initState() {
     super.initState();
     _startTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initFromQuery());
   }
 
   @override
@@ -43,6 +45,17 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     });
   }
 
+  void _initFromQuery() {
+    if (_autoVerified) return;
+    final qp = GoRouterState.of(context).uri.queryParameters;
+    final token = qp['token']?.trim();
+    if (token != null && token.isNotEmpty) {
+      _token.text = token;
+      _autoVerified = true;
+      _onVerify();
+    }
+  }
+
   Future<void> _onVerify() async {
     final tokenText = _token.text.trim();
     if (tokenText.isEmpty) {
@@ -59,7 +72,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Email verified successfully')),
       );
-      context.go('/login');
+      final email = GoRouterState.of(context).uri.queryParameters['email'];
+      final target = email == null || email.isEmpty ? '/login' : '/login?email=$email';
+      context.go(target);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

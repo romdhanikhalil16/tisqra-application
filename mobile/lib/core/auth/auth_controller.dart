@@ -26,9 +26,6 @@ class AuthController extends StateNotifier<AuthState> {
 
   final Dio _keycloakDio = Dio();
   static const Set<String> _blockedRegularAuthRoles = {
-    'SUPER_ADMIN',
-    'ADMIN_ORG',
-    'SCANNER',
   };
 
   Future<void> initialize() async {
@@ -99,33 +96,24 @@ class AuthController extends StateNotifier<AuthState> {
     final accessToken =
         data['access_token'] as String? ?? data['accessToken'] as String?;
     final refreshToken =
-        data['refresh_token'] as String? ?? data['refreshToken'] as String?;
+        data['refresh_token'] as String? ?? data['refreshToken'] as String? ?? '';
     final tokenType =
-        data['token_type'] as String? ?? data['tokenType'] as String?;
+        data['token_type'] as String? ?? data['tokenType'] as String? ?? 'Bearer';
     final expiresIn =
-        (data['expires_in'] as num?)?.toInt() ?? (data['expiresIn'] as num?)?.toInt();
+        (data['expires_in'] as num?)?.toInt() ?? (data['expiresIn'] as num?)?.toInt() ?? 3600;
 
-    if (accessToken == null ||
-        refreshToken == null ||
-        expiresIn == null ||
-        tokenType == null) {
-      throw Exception('Invalid login response');
+    if (accessToken == null) {
+      throw Exception('Invalid login response: Missing access token');
     }
 
     final expiresAtMs =
         DateTime.now().millisecondsSinceEpoch + expiresIn * 1000;
 
-    final userResp = await _apiClient.getApiResponse<Map<String, dynamic>>(
-      '/api/users/me',
-      bearerToken: accessToken,
-      dataParser: (json) => json as Map<String, dynamic>,
-    );
-
-    if (!userResp.success) {
-      throw Exception(userResp.error?.message ?? 'Failed to fetch user');
+    final userDto = data['user'] as Map<String, dynamic>?;
+    if (userDto == null) {
+      throw Exception('User data missing in login response');
     }
 
-    final userDto = userResp.data!;
     final userId = userDto['id']?.toString();
     final userEmail = userDto['email']?.toString() ?? email;
     final userRole = userDto['role']?.toString().toUpperCase() ?? '';
@@ -136,10 +124,10 @@ class AuthController extends StateNotifier<AuthState> {
         : email;
 
     if (userId == null) {
-      throw Exception('User id missing in user-service response');
+      throw Exception('User id missing in login response');
     }
     if (userRole.isEmpty) {
-      throw Exception('User role missing in user-service response');
+      throw Exception('User role missing in login response');
     }
     if (_blockedRegularAuthRoles.contains(userRole)) {
       await _tokenStorage.clear();
@@ -178,6 +166,7 @@ class AuthController extends StateNotifier<AuthState> {
     required String password,
     required String firstName,
     required String lastName,
+    String? phone,
   }) async {
     final apiResponse = await _apiClient.postApiResponseDynamic(
       '/api/auth/register',
@@ -187,7 +176,7 @@ class AuthController extends StateNotifier<AuthState> {
         'password': password,
         'firstName': firstName,
         'lastName': lastName,
-        'phone': null,
+        'phone': phone,
         'role': 'GUEST',
       },
     );

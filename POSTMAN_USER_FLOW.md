@@ -214,4 +214,3 @@ Analytics base: `/api/analytics`
 
 - The mobile app stores user **DB id** separately from Keycloak `sub` and fetches it via `GET /api/users/keycloak/{sub}`.
 - In `UserController`, some access rules compare `{id}` to JWT `sub`. If `{id}` is your DB UUID (not Keycloak `sub`), that check will never pass for normal users; admins will still work. If you want “self profile” access, add a dedicated endpoint like `GET /api/users/me` that resolves by `sub`.
-

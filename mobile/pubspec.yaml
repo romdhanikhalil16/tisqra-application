@@ -51,6 +51,7 @@ dependencies:
   share_plus: ^10.1.2
   skeletonizer: ^1.4.2
   shared_preferences: ^2.3.2
+  mobile_scanner: ^7.2.0
 
 dev_dependencies:
   flutter_test:

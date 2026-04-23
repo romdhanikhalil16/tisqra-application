@@ -125,11 +125,11 @@ Both register and login now return token payload under `data`:
 ```
 
 ### 1.6 Role restrictions (mobile + API)
-- Regular mobile auth screens (`/login`, `/register`) are for attendee flow only.
-- `SUPER_ADMIN` and `ADMIN_ORG` are blocked from regular mobile login with a clear message.
+- Regular mobile auth screens (`/login`, `/register`) primarily target attendees, but `SUPER_ADMIN` and `ADMIN_ORG` can now log in to access their respective mobile dashboards.
+- `SCANNER` accounts can now log in via the mobile app to access the Scanner Dashboard (`/scanner`) and QR code scanning capabilities.
 - Public registration always creates `GUEST` accounts.
-- Creating `ADMIN_ORG` users via `POST /api/users` is restricted to `SUPER_ADMIN` at API level.
-- `SCANNER` and `ADMIN_ORG` accounts must be provisioned by `SUPER_ADMIN` (not by public register flow).
+- Creating `ADMIN_ORG` users via `POST /api/users` is restricted to `SUPER_ADMIN` at API level (now accessible via mobile app).
+- `SCANNER` and `ADMIN_ORG` accounts must be provisioned by `SUPER_ADMIN` or `ADMIN_ORG` via the admin dashboard flows.
 
 ### 1.7 Auth flow details (important for Postman)
 Email verification is DB-backed and sent over **real SMTP** (MailHog in Docker dev, or your provider in prod).

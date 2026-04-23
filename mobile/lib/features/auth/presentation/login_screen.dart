@@ -17,6 +17,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _password = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
+  bool _prefilledFromQuery = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_prefilledFromQuery) return;
+    final emailFromQuery = GoRouterState.of(context).uri.queryParameters['email'];
+    if (emailFromQuery != null && emailFromQuery.trim().isNotEmpty) {
+      _email.text = emailFromQuery.trim();
+      _prefilledFromQuery = true;
+    }
+  }
 
   @override
   void dispose() {
@@ -27,13 +39,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   String? _validateEmail(String value) {
     if (value.trim().isEmpty) return 'Email is required';
-    if (!value.contains('@')) return 'Enter a valid email';
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (!emailRegex.hasMatch(value.trim())) return 'Enter a valid email';
     return null;
   }
 
   String? _validatePassword(String value) {
     if (value.isEmpty) return 'Password is required';
-    if (value.length < 8) return 'Password must be at least 8 characters';
     return null;
   }
 
@@ -46,6 +58,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _onLogin() async {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
     final emailError = _validateEmail(_email.text);
     final passError = _validatePassword(_password.text);
     if (emailError != null || passError != null) {
@@ -62,8 +76,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             email: _email.text.trim(),
             password: _password.text,
           );
-      if (!mounted) return;
-      context.go('/app/home');
+      // Removed context.go('/app/home') because GoRouter automatically
+      // redirects via the redirect callback in app_router.dart when auth state changes.
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -8,6 +8,7 @@ import 'package:mobile/features/auth/presentation/login_screen.dart';
 import 'package:mobile/features/auth/presentation/register_screen.dart';
 import 'package:mobile/features/auth/presentation/reset_password_screen.dart';
 import 'package:mobile/features/auth/presentation/splash_screen.dart';
+import 'package:mobile/features/auth/presentation/unauthorized_screen.dart';
 import 'package:mobile/features/auth/presentation/verify_email_screen.dart';
 import 'package:mobile/features/home/presentation/home_screen.dart';
 import 'package:mobile/features/main/presentation/app_shell.dart';
@@ -24,6 +25,16 @@ import 'package:mobile/features/profile/presentation/settings_screen.dart';
 import 'package:mobile/features/profile/presentation/profile_screen.dart';
 import 'package:mobile/features/tickets/presentation/tickets_screen.dart';
 import 'package:mobile/features/tickets/presentation/ticket_details_screen.dart';
+import 'package:mobile/features/admin/presentation/super_admin_dashboard.dart';
+import 'package:mobile/features/admin/presentation/list_org_admins_screen.dart';
+import 'package:mobile/features/admin/presentation/create_org_admin_screen.dart';
+import 'package:mobile/features/admin/presentation/admin_org_dashboard.dart';
+import 'package:mobile/features/admin/presentation/list_org_users_screen.dart';
+import 'package:mobile/features/admin/presentation/create_regular_user_screen.dart';
+import 'package:mobile/features/admin/presentation/manage_organizations_screen.dart';
+import 'package:mobile/features/admin/presentation/manage_events_screen.dart';
+import 'package:mobile/features/scanner/presentation/scanner_dashboard_screen.dart';
+import 'package:mobile/features/scanner/presentation/qr_scanner_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = GoRouterRefreshNotifier();
@@ -57,10 +68,31 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           path == '/reset-password';
 
       if (!isLoggedIn && !isPublic) return '/login';
-      if (isLoggedIn && isAuthRoute) return '/app/home';
 
-      if (isLoggedIn && authState.userRole == 'SCANNER' && path.startsWith('/app')) {
-        return '/unauthorized';
+      if (isLoggedIn) {
+        if (authState.userRole == 'SUPER_ADMIN' && !path.startsWith('/super-admin')) {
+          return '/super-admin';
+        }
+        if (authState.userRole == 'ADMIN_ORG' && !path.startsWith('/admin-org')) {
+          return '/admin-org';
+        }
+        if (authState.userRole == 'SCANNER' && !path.startsWith('/scanner')) {
+          return '/scanner';
+        }
+        if (authState.userRole == 'GUEST' && isAuthRoute) {
+          return '/app/home';
+        }
+
+        // Protect admin routes from non-admins
+        if (path.startsWith('/super-admin') && authState.userRole != 'SUPER_ADMIN') {
+          return '/unauthorized';
+        }
+        if (path.startsWith('/admin-org') && authState.userRole != 'ADMIN_ORG') {
+          return '/unauthorized';
+        }
+        if (path.startsWith('/scanner') && authState.userRole != 'SCANNER') {
+          return '/unauthorized';
+        }
       }
       return null;
     },
@@ -91,7 +123,47 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/unauthorized',
-        builder: (context, state) => const _UnauthorizedScreen(),
+        builder: (context, state) => const UnauthorizedScreen(),
+      ),
+      GoRoute(
+        path: '/super-admin',
+        builder: (context, state) => const SuperAdminDashboard(),
+      ),
+      GoRoute(
+        path: '/super-admin/org-admins',
+        builder: (context, state) => const ListOrgAdminsScreen(),
+      ),
+      GoRoute(
+        path: '/super-admin/create-org-admin',
+        builder: (context, state) => const CreateOrgAdminScreen(),
+      ),
+      GoRoute(
+        path: '/admin-org',
+        builder: (context, state) => const AdminOrgDashboard(),
+      ),
+      GoRoute(
+        path: '/admin-org/users',
+        builder: (context, state) => const ListOrgUsersScreen(),
+      ),
+      GoRoute(
+        path: '/admin-org/create-user',
+        builder: (context, state) => const CreateRegularUserScreen(),
+      ),
+      GoRoute(
+        path: '/admin-org/events',
+        builder: (context, state) => const ManageEventsScreen(),
+      ),
+      GoRoute(
+        path: '/super-admin/organizations',
+        builder: (context, state) => const ManageOrganizationsScreen(),
+      ),
+      GoRoute(
+        path: '/scanner',
+        builder: (context, state) => const ScannerDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/scanner/scan',
+        builder: (context, state) => const QRScannerScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
@@ -175,33 +247,4 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 });
 
 class GoRouterRefreshNotifier extends ChangeNotifier {}
-
-class _UnauthorizedScreen extends StatelessWidget {
-  const _UnauthorizedScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Unauthorized')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.lock_outline, size: 56),
-              const SizedBox(height: 12),
-              const Text('This account is not allowed to access this app.'),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: () => context.go('/login'),
-                child: const Text('Back to login'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 

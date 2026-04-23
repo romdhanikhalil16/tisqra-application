@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 /**
  * Request DTO for SUPER_ADMIN-managed account provisioning.
  */
@@ -34,6 +36,8 @@ public class ProvisionUserRequest {
     private String lastName;
 
     private String phone;
+
+    private UUID organizationId;
 
     @NotNull(message = "Role is required")
     private UserRole role;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/auth/auth_controller.dart';
+import 'package:mobile/core/network/api_response.dart';
 import 'package:mobile/features/admin/data/user_service.dart';
 
 class ListOrgUsersScreen extends ConsumerStatefulWidget {

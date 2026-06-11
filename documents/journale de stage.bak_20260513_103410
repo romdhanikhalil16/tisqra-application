@@ -1,0 +1,153 @@
+Journal de bord
+Stage VMS
+Stagiaire : [Khalil Romdhani]
+Période : Décembre 2025– Juin 2026
+Fonctionnalités principales (découpage)
+— Backend (vms / Spring Boot) : Auth JWT/TOTP, gestion meetings, employés, visiteurs,
+offices, participants, deep links, migrations Liquibase.
+— Mobile (vms-fe / Flutter) : authentification, écrans métiers, navigation, intégration API,
+gestion des tokens.
+— Flux QR: génération QR pass, récupération secret participant, scan et validation.
+— Qualité et delivery : documentation technique, collection Postman, setup guide, stabilisation.
+Journal hebdomadaire (26 semaines)
+Semaine 1 (01/12– 07/12)
+Missions : Onboarding projet, installation des outils (Java, Maven, Flutter), première lecture de
+l’architecture globale.
+Apprentissages : Compréhension d’une architecture backend/mobile séparée.
+Compétences : Environnement de dev, lecture de code.
+Difficultés / Réponses : Volume du projet élevé → création de notes de cartographie.
+Semaine 2 (08/12– 14/12)
+Missions : Analyse backend : packages web/service/repository/model.
+Apprentissages : Fonctionnement des controllers REST Spring Boot.
+Compétences : Java, REST, organisation des couches.
+Difficultés / Réponses : Routes nombreuses → classification par domaine (meetings, users, offices).
+Semaine 3 (15/12– 21/12)
+Missions : Étude de la sécurité (Basic auth, JWT, rôles).
+Apprentissages : Différence entre endpoints publics et protégés.
+Compétences : Sécurité API, lecture config XML Spring Security.
+Difficultés / Réponses : Règles d’accès complexes → tableau permissions/roles.
+Semaine 4 (22/12– 28/12)
+Missions : Analyse base de données et Liquibase.
+Apprentissages : Migrations progressives et impact métier.
+Compétences : PostgreSQL, changelogs Liquibase.
+1
+Difficultés / Réponses : Historique de schéma long → focus sur tables critiques (meeting, profiles,
+token).
+Semaine 5 (29/12– 04/01)
+Missions : Analyse mobile Flutter (structure lib/screens/controllers/services/models).
+Apprentissages : Flux démarrage app + Provider + navigation.
+Compétences : Dart/Flutter, architecture applicative.
+Difficultés / Réponses : Navigation dispersée → schéma de navigation simplifié.
+Semaine 6 (05/01– 11/01)
+Missions : Étude intégration API côté mobile (Dio, interceptors, token holder).
+Apprentissages : Injection automatique du Bearer token.
+Compétences : Consommation API, auth mobile.
+Difficultés / Réponses : Multiples configs URL → recensement des base URLs utilisées.
+Semaine 7 (12/01– 18/01)
+Missions : Focus fonctionnalité Meeting (CRUD + transitions).
+Apprentissages : États meeting (draft/pending/confirmed/in-progress/cancelled).
+Compétences : Logique métier, test fonctionnel API.
+Difficultés / Réponses : Transitions non triviales → diagramme d’états.
+Semaine 8 (19/01– 25/01)
+Missions : Focus Employees et Visitors (CRUD + auth).
+Apprentissages : Login employee (password) vs visitor (TOTP).
+Compétences : Validation DTO, gestion profils.
+Difficultés / Réponses : Cas edge profils → scénarios de test ciblés.
+Semaine 9 (26/01– 01/02)
+Missions : Focus Offices + relation manager/default office.
+Apprentissages : Importance des relations métier dans la cohérence des données.
+Compétences : Analyse entités/repositories.
+Difficultés / Réponses : Compréhension des liens croisés → mapping relationnel simplifié.
+Semaine 10 (02/02– 08/02)
+Missions : Analyse complète du flux QR (génération, scan, validation).
+Apprentissages : Rôle du secret participant et de la résolution meeting.
+Compétences : JWT/QR, sécurité du flux d’accès.
+Difficultés / Réponses : Flux cross-backend/mobile → traçage étape par étape.
+Semaine 11 (09/02– 15/02)
+Missions : Étude écrans meeting scanner/résultat/passerelle access.
+Apprentissages : Comment la décision finale est prise côté mobile après vérification.
+Compétences : Lecture de logique contrôleur Flutter.
+Difficultés / Réponses : Multiples écrans résultat → arbre de décision UI.
+2
+Semaine 12 (16/02– 22/02)
+Missions : Consolidation endpoints backend (inventaire exhaustif).
+Apprentissages : Vue globale par domaine et méthode HTTP.
+Compétences : Documentation API, structuration technique.
+Difficultés / Réponses : Endpoints nombreux → regroupement par controller.
+Semaine 13 (23/02– 01/03)
+Missions : Création initiale collection Postman (variables, headers, body templates).
+Apprentissages : Standardisation des appels pour recette rapide.
+Compétences : Postman, modélisation des requêtes.
+Difficultés / Réponses : Exemples de payloads → utilisation des DTOs comme référence.
+Semaine 14 (02/03– 08/03)
+Missions : Validation des routes d’auth et des flux de tokens.
+Apprentissages : Gestion des headers ‘Authorization‘ (Basic/Bearer).
+Compétences : Sécurité applicative, diagnostic d’accès.
+Difficultés / Réponses : Erreurs 401/403 → check systématique rôle + endpoint.
+Semaine 15 (09/03– 15/03)
+Missions : Documentation backend ‘vms.md‘ (architecture + modules + DB + API).
+Apprentissages : Importance d’une doc orientée onboarding.
+Compétences : Rédaction technique structurée.
+Difficultés / Réponses : Trouver le bon niveau de détail → sections hiérarchisées.
+Semaine 16 (16/03– 22/03)
+Missions : Documentation mobile ‘vms-fe.md‘ (structure, navigation, services, QR).
+Apprentissages : Visualiser clairement la connexion app ↔ backend.
+Compétences : Analyse Flutter, synthèse fonctionnelle.
+Difficultés / Réponses : Double stack staff/visitor → séparation explicite des parcours.
+Semaine 17 (23/03– 29/03)
+Missions : Rédaction ‘workflow.md‘ (invitation, QR, scan, validation backend).
+Apprentissages : Vision end-to-end orientée métier.
+Compétences : Modélisation de processus.
+Difficultés / Réponses : Étapes implicites → explicitation de chaque transition.
+Semaine 18 (30/03– 05/04)
+Missions : Rédaction ‘setup-guide.md‘ (pré-requis, run backend/mobile, env vars).
+Apprentissages : Priorité à la reproductibilité de l’environnement.
+Compétences : DevOps basique, documentation opérationnelle.
+Difficultés / Réponses : Multiples environnements → exemples concrets par plateforme.
+3
+Semaine 19 (06/04– 12/04)
+Missions : Revue qualité des livrables docs + collection API.
+Apprentissages : Cohérence inter-docs indispensable.
+Compétences : Relecture critique, validation croisée.
+Difficultés / Réponses : Risque de divergence → checklist de vérification centralisée.
+Semaine 20 (13/04– 19/04)
+Missions : Identification des zones ambiguës (règles sécurité, endpoints partiels).
+Apprentissages : Savoir signaler un risque sans bloquer l’avancement.
+Compétences : Analyse de risque technique.
+Difficultés / Réponses : Incertitudes fonctionnelles → notes d’hypothèses documentées.
+Semaine 21 (20/04– 26/04)
+Missions : Vérification du flux visitor (check-in, redeem, token, accès mobile).
+Apprentissages : Spécificités des profils visiteurs dans le cycle meeting.
+Compétences : Test de parcours utilisateur.
+Difficultés / Réponses : Cas limites visitor → scénarios de test supplémentaires.
+Semaine 22 (27/04– 03/05)
+Missions : Vérification du flux staff (login, création meeting, scan QR, validation).
+Apprentissages : Enchaînement des modules autour d’un cas métier réel.
+Compétences : Validation end-to-end, communication technique.
+Difficultés / Réponses : Dépendance multi-modules → tests étape par étape.
+Semaine 23 (04/05– 10/05)
+Missions : Finalisation de la collection Postman avec exemples de réponses.
+Apprentissages : Créer des collections exploitables par QA/dev rapidement.
+Compétences : Standardisation API, templates de test.
+Difficultés / Réponses : Uniformisation des exemples → format minimal commun.
+Semaine 24 (11/05– 17/05)
+Missions : Préparation synthèse architecture pour soutenance/rapport.
+Apprentissages : Transformer l’analyse technique en message clair.
+Compétences : Vulgarisation technique, storytelling projet.
+Difficultés / Réponses : Trop d’informations → priorisation par impact métier.
+Semaine 25 (18/05– 24/05)
+Missions : Stabilisation finale des livrables et revue complète.
+Apprentissages : Importance des contrôles finaux avant remise.
+Compétences : Gestion de livraison, contrôle qualité.
+Difficultés / Réponses : Respect des délais de clôture → planification quotidienne courte.
+4
+Semaine 26 (25/05– 01/06)
+Missions : Clôture stage, bilan des compétences acquises, préparation restitution finale.
+Apprentissages : Progression full-stack (backend, mobile, API, doc).
+Compétences : Autonomie, méthode, communication professionnelle.
+Difficultés / Réponses : Synthèse finale dense → format structuré en parties claires.
+Bilan global
+Ce stage m’a permis de couvrir un cycle complet : compréhension d’un système existant, analyse
+des flux métiers, structuration API, documentation technique et préparation de la livraison finale.
+Les compétences les plus renforcées sont : architecture logicielle, intégration backend/mobile,
+sécurité API, qualité documentaire, et organisation projet

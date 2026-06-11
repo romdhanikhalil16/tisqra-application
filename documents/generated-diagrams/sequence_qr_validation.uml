@@ -1,0 +1,89 @@
+@startuml
+title Sprint 3 - Sequence - Validation d’accès par QR (scanner staff)
+
+actor "Agent / sécurité" as Agent
+participant "App Flutter\n(écran scanner)" as App
+participant "API /vms" as API
+participant "MeetingWebController" as MeetCtl
+participant "ParticipantWebController" as PartCtl
+participant "MeetingService" as S
+database "PostgreSQL" as DB
+
+note over App
+  Le QR contient un JWT (claims typiques : mid, pid, exp, …).
+  La logique métier finale combine l’état de la réunion,
+  la fenêtre −15 min avant le début, et l’expiration du JWT
+  (classe MeetingScanResult côté Flutter).
+end note
+
+Agent -> App : scan QR
+App -> App : décoder le payload\n(JWT ou JSON)
+
+alt Payload illisible / expiré côté décodage
+  App -> Agent : « QR invalide »\n(caméra reste active)
+else Payload exploitable
+  App -> API : GET /meetings/{id}\nAuthorization: Bearer (employé scanner)
+  API -> MeetCtl : get(id, auth)
+  MeetCtl -> S : get(id, auth)
+  S -> DB : réunion + droits de visibilité
+  DB --> S : Meeting
+  alt Réunion introuvable ou non visible
+    S --> MeetCtl : 404
+    MeetCtl --> API : ResourceNotFoundException
+    API --> App : 404
+    App -> Agent : accès refusé / inconnu
+  else Réunion chargée
+    S --> MeetCtl : Meeting
+    MeetCtl --> API : MeetingDto
+    API --> App : détail réunion
+    App -> App : vérifier que **pid** est invité ou visiteur\nsur la réunion (liste locale)
+
+    alt Participant absent des listes
+      App -> Agent : « pas sur cette réunion »
+    else Participant listé
+      App -> API : GET /participants/{meetingId}/secret\nAuthorization: Bearer (scanner)
+      API -> PartCtl : getMeetingSecretForParticipant(meetingId, auth)
+      PartCtl -> S : getParticipantMeetingSecret(meetingId, auth)
+      S -> DB : charger réunion, secret, éligibilité du **scanner**
+      alt Réunion pas CONFIRMED / IN_PROGRESS\nou secret absent
+        S --> PartCtl : MeetingValidationException → 400
+        PartCtl --> API : 400
+        API --> App : secret indisponible
+        App -> Agent : pass non valide (contexte)
+      else Scanner non éligible au secret\n(non admin, pas sur la réunion, règle bureau…)
+        S --> PartCtl : MeetingValidationException → 400
+        PartCtl --> API : 400
+        API --> App : refus
+        App -> Agent : impossible de vérifier la signature
+      else Secret retourné (**secret de réunion**, partagé)
+        S --> PartCtl : UserSecretDto (secret, displayName)
+        PartCtl --> API : 200
+        API --> App : secret + nom affichage
+        App -> App : vérifier signature JWT du QR\navec le secret réunion
+
+        alt Signature JWT invalide
+          App -> Agent : « QR signature verification failed »
+        else Signature valide
+          App -> App : appliquer règles **isValid** /\n**not yet valid** / **expiré**
+          alt Pass valide (statut + fenêtre temps + exp)
+            App -> Agent : écran accès autorisé
+          else Trop tôt (grâce 15 min)
+            App -> Agent : écran « pas encore valide »
+          else Pass expiré ou mauvais statut
+            App -> Agent : refus / message adapté
+          end
+        end
+      end
+    end
+  end
+end
+
+note right of API
+  API alternative (tout employé authentifié) :
+  GET /meetings/{id}/resolve?participant={email du détenteur du QR}
+  retourne un instantané (statut, horaires, noms, secret).
+  L’app scanner actuelle s’appuie surtout sur
+  GET /meetings/{id} + GET /participants/{id}/secret.
+end note
+
+@enduml

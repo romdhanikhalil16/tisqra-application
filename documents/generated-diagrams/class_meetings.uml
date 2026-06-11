@@ -1,0 +1,39 @@
+@startuml
+'/'title Sprint 2 - Class Diagram - Meetings
+class MeetingController {
+  -meetingService: MeetingService
+  -securityContext: SecurityContext
+  +createMeeting(dto): MeetingDto
+  +updateMeeting(id, dto): MeetingDto
+}
+class MeetingService {
+  -meetingRepository: MeetingRepository
+  -officeRepository: OfficeRepository
+  -employeeRepository: EmployeeRepository
+  +create(dto, actor): Meeting
+  +changeStatus(id, status): void
+}
+class MeetingRepository {
+  -entityManager: EntityManager
+  -tableName: String
+  +save(meeting): Meeting
+  +findById(id): Meeting
+}
+class Meeting {
+  -id: Long
+  -topic: String
+  -status: String
+  +isEditable(): boolean
+  +setStatus(newStatus): void
+}
+class MeetingServiceMobile {
+  -dioClient: DioClient
+  -baseUrl: String
+  +fetchMeetings(page): List
+  +createMeeting(data): MeetingModel
+}
+MeetingController "1" --> "1" MeetingService
+MeetingService "1" --> "1" MeetingRepository
+MeetingRepository "1" --> "0..*" Meeting
+MeetingServiceMobile "1" --> "1" MeetingController
+@enduml

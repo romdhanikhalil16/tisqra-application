@@ -1,0 +1,32 @@
+@startuml
+'/'title Sprint 3 - Class Diagram - QR Access
+class ParticipantController {
+  -participantService: ParticipantService
+  -meetingService: MeetingService
+  +getSecret(meetingId): UserSecretDto
+  +resolveMeeting(meetingId, participant): MeetingResolveDto
+}
+class ParticipantService {
+  -meetingRepository: MeetingRepository
+  -employeeRepository: EmployeeRepository
+  -visitorRepository: VisitorRepository
+  +fetchParticipantSecret(meetingId, user): String
+  +isParticipantAllowed(meetingId, email): boolean
+}
+class UserSecretDto {
+  -displayName: String
+  -secret: String
+  -meetingId: Long
+  +maskSecret(): String
+  +toJson(): Map
+}
+class MeetingScannerControllerMobile {
+  -meetingServiceMobile: MeetingServiceMobile
+  -jwtHelper: JwtHelper
+  +scanAndDecode(raw): Map
+  +verifyAccess(meetingId, participant): boolean
+}
+ParticipantController "1" --> "1" ParticipantService
+ParticipantService "1" --> "0..*" UserSecretDto
+MeetingScannerControllerMobile "1" --> "1" ParticipantController
+@enduml

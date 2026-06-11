@@ -1,0 +1,34 @@
+@startuml
+'/'title Sprint 4 - Class Diagram - Visitors
+class VisitorController {
+  -visitorService: VisitorService
+  -tokenService: TokenService
+  +createVisitor(dto): VisitorDto
+  +checkIn(dto): void
+}
+class VisitorService {
+  -visitorRepository: VisitorRepository
+  -meetingRepository: MeetingRepository
+  -tokenRepository: TokenRepository
+  +redeem(code, visitor): FullVisitorDto
+  +checkIn(dto): boolean
+}
+class Visitor {
+  -email: String
+  -firstname: String
+  -lastname: String
+  -company: String
+  +fullName(): String
+  +updateProfile(company, phone): void
+}
+class VisitorServiceMobile {
+  -dioClient: DioClient
+  -baseUrl: String
+  -tokenHolder: TokenHolder
+  +checkIn(data): boolean
+  +redeemInvite(code, visitor): Map
+}
+VisitorController "1" --> "1" VisitorService
+VisitorService "1" --> "0..*" Visitor
+VisitorServiceMobile "1" --> "1" VisitorController
+@enduml

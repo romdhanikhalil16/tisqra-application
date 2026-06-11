@@ -1,0 +1,48 @@
+@startuml
+'/'title Sprint 1 - Class Diagram - Authentification
+class AuthController {
+  -jwtService: JwtService
+  -employeeService: EmployeeService
+  +loginEmployee(email, password): String
+  +loginVisitor(email, totpCode): String
+}
+class EmployeeService {
+  -employeeRepository: EmployeeRepository
+  -passwordEncoder: PasswordEncoder
+  +authenticate(email, password): Employee
+  +loadUserByUsername(email): Employee
+}
+class JwtService {
+  -privateKey: String
+  -publicKey: String
+  -ttlSeconds: long
+  +generateToken(subject, scope): String
+  +validateToken(token): boolean
+}
+class Employee {
+  -email: String
+  -passwordHash: String
+  -role: String
+  +checkPassword(raw): boolean
+  +toScope(): String
+}
+class TokenHolder {
+  -accessToken: String
+  -refreshAt: String
+  -userEmail: String
+  +getToken(): String
+  +clearToken(): void
+}
+class AuthServiceMobile {
+  -dioClient: DioClient
+  -tokenHolder: TokenHolder
+  +loginEmployee(email, password): String
+  +saveToken(jwt): void
+}
+AuthController "1" --> "1" EmployeeService
+AuthController "1" --> "1" JwtService
+EmployeeService "1" --> "0..*" Employee
+EmployeeService "1" --> "1" EmployeeRepository
+AuthServiceMobile "1" --> "1" TokenHolder
+AuthServiceMobile "1" --> "1" AuthController
+@enduml

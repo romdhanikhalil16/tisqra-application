@@ -1,0 +1,41 @@
+@startuml
+title Sprint 2 - Sequence - Création de réunion
+
+actor Utilisateur as User
+participant "App Flutter" as App
+participant "API /vms" as API
+participant "MeetingWebController" as C
+participant "MeetingService" as S
+participant "EmailTemplateService /\nMeetingRedeemerService\n(invitations / codes)" as Notify
+database "PostgreSQL" as DB
+
+User -> App : créer réunion (sujet, créneau, bureau, participants…)
+App -> API : POST /meetings\nAuthorization: Bearer JWT\nbody MeetingDto
+API -> C : add(dto, auth)
+C -> S : createMeeting(dto, auth)
+S -> DB : INSERT réunion + associations\n(statut initial selon l’acteur)
+DB --> S : Meeting persisté
+
+alt Créateur = visiteur (JWT visiteur)
+  S --> C : statut **PENDING**\n(demande à valider par l’hôte)
+else Créateur = employé
+  S --> C : statut **CREATED**\n(réunion publiée côté métier)
+end
+
+alt Statut == CREATED
+  C -> Notify : notifyVisitorsEmailInvites(meeting)\n(codes TOTP / liens selon config)
+  alt Génération codes OK
+    Notify --> C : ok
+  else CodeGenerationException
+    Notify --> C : erreur
+    C --> API : propagation erreur
+    API --> App : échec après création\n(scénario d’erreur documenté)
+  end
+else Statut == PENDING
+  C -> C : pas d’envoi massif invités\nà cette étape (flux acceptation)
+end
+
+C --> API : 200 OK + MeetingDto\n(aligné contrôleur)
+API --> App : réunion JSON (id, statut, …)
+
+@enduml

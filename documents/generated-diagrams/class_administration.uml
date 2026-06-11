@@ -1,0 +1,33 @@
+@startuml
+title Sprint 5 - Class Diagram - Administration
+class OfficeController {
+  -officeService: OfficeService
+  -employeeService: EmployeeService
+  +createOffice(dto): OfficeDto
+  +updateOffice(id, dto): OfficeDto
+}
+class OfficeService {
+  -officeRepository: OfficeRepository
+  -employeeRepository: EmployeeRepository
+  -auditService: AuditService
+  +assignManager(officeId, managerEmail): void
+  +deleteOffice(officeId): void
+}
+class Office {
+  -id: Long
+  -name: String
+  -city: String
+  -country: String
+  +changeLocation(city, country): void
+  +setManager(email): void
+}
+class OfficeServiceMobile {
+  -dioClient: DioClient
+  -baseUrl: String
+  +fetchOffices(): List
+  +updateOffice(id, payload): OfficeModel
+}
+OfficeController "1" --> "1" OfficeService
+OfficeService "1" --> "0..*" Office
+OfficeServiceMobile "1" --> "1" OfficeController
+@enduml

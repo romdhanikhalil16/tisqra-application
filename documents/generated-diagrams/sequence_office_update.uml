@@ -1,0 +1,32 @@
+@startuml
+title Sprint 5 - Sequence - Mise à jour d’un bureau (admin)
+
+actor Administrateur as Admin
+participant "App Flutter" as App
+participant "API /vms" as API
+participant "OfficeWebController" as C
+participant "OfficeService" as S
+database "PostgreSQL" as DB
+
+Admin -> App : modifier bureau (champs partiels)
+App -> API : PATCH /offices/{id}\nAuthorization: Bearer (rôle autorisé)\nbody OfficeDto partiel
+API -> C : update(id, dto)
+C -> S : modify(id, dto)
+S -> DB : SELECT office par id
+
+alt Bureau introuvable
+  DB --> S : absent
+  S --> C : ResourceNotFoundException → 404
+  C --> API : 404
+  API --> App : not found
+else Bureau existant
+  DB --> S : Office
+  S -> S : fusion des champs (mapper / logique métier)
+  S -> DB : UPDATE office
+  DB --> S : enregistré
+  S --> C : OfficeDto
+  C --> API : 200 OK
+  API --> App : Office JSON à jour
+end
+
+@enduml

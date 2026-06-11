@@ -1,0 +1,49 @@
+Journal de stage synchronise par sprints
+Stagiaire : Khalil Romdhani
+Periode : Decembre 2025 - Juin 2026
+Projet : Visitor Management System (VMS)
+
+Sprint 1 - Authentification et gestion des roles
+- Objectifs : Mettre en place l'authentification employee/visitor et le controle d'acces par roles.
+- Taches realisees : Analyse des endpoints /employees/token et /visitors/token, verification des regles de securite vms-config.xml, validation du flux Bearer JWT cote mobile.
+- Technologies utilisees : Spring Security, JWT, TOTP, Flutter Dio interceptor, Provider.
+- Defis rencontres : Comprendre les regles d'autorisation XML et les differences entre routes publiques/protegees.
+- Resume de progression : Authentification maitrisee de bout en bout avec une vision claire des droits d'acces.
+
+Sprint 2 - Gestion des reunions
+- Objectifs : Couvrir le cycle de vie des reunions (CRUD + transitions d'etat).
+- Taches realisees : Cartographie des endpoints meetings, etude des DTO MeetingDto/MeetingResolveDto, verification des actions accept/pass/start/cancel.
+- Technologies utilisees : Spring Boot, JPA, Querydsl, Flutter services/controllers.
+- Defis rencontres : Coherence des transitions d'etat et cas limites temporels.
+- Resume de progression : Fonctionnement metier des reunions clarifie et documente.
+
+Sprint 3 - Flux QR (generation et validation)
+- Objectifs : Securiser le controle d'acces via QR code.
+- Taches realisees : Analyse du flux get secret participant -> generation token QR -> scan -> resolve meeting, verification des ecrans scanner/resultat.
+- Technologies utilisees : JWT helper mobile, endpoint /participants/{meetingId}/secret, endpoint /meetings/{id}/resolve.
+- Defis rencontres : Synchronisation backend/mobile sur la validation du participant et du statut meeting.
+- Resume de progression : Flux QR trace et valide, avec un schema fonctionnel stable.
+
+Sprint 4 - Gestion visiteurs et check-in
+- Objectifs : Digitaliser l'enregistrement visiteur et fluidifier l'accueil.
+- Taches realisees : Revue endpoints visitors (CRUD, redeem, check-in, token), verification du parcours visitorpart.
+- Technologies utilisees : Spring Boot REST, Flutter visitor module, Dio, models JSON.
+- Defis rencontres : Gestion des scenarios visiteurs (nouveau visiteur, redeem, connexion TOTP).
+- Resume de progression : Parcours visiteur rendu coherent et exploitable en environnement reel.
+
+Sprint 5 - Administration et gouvernance
+- Objectifs : Consolider la gestion administrative (offices, supervision des donnees).
+- Taches realisees : Revue des endpoints offices et users, verification des regles d'autorisation admin/employee, ajout de cardinalites dans les diagrammes UML.
+- Technologies utilisees : Spring Boot, PostgreSQL, Liquibase, Mermaid/PlantUML.
+- Defis rencontres : Harmoniser la documentation et la conception UML avec le code existant.
+- Resume de progression : Documentation technique et diagrams alignes avec l'architecture applicative.
+
+Sprint 6 - Documentation finale et industrialisation
+- Objectifs : Produire les livrables de rapport et de maintenance.
+- Taches realisees : Generation de la collection Postman, redaction vms.md / vms-fe.md / workflow.md / setup-guide.md, preparation du rapport latex.
+- Technologies utilisees : Markdown, LaTeX, Postman JSON, scripts Python.
+- Defis rencontres : Garder une coherence globale entre code, API, UML et narration de stage.
+- Resume de progression : Livrables finalises avec une presentation professionnelle et reutilisable.
+
+Bilan general
+Cette experience de stage est tres positive. Elle m'a permis de renforcer mes competences full-stack, de mieux comprendre la conception d'une architecture orientee securite, et de produire des livrables professionnels utiles a l'equipe.

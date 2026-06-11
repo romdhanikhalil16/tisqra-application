@@ -1,0 +1,116 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+\title{Rapport de stage -- Visitor Management System (VMS)}
+\author{Khalil Romdhani}
+\date{\today}
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+Ce rapport presente les travaux realises autour du projet Visitor Management System (VMS), une solution full-stack combinant backend Spring Boot et application mobile Flutter. L'objectif principal est d'automatiser la gestion des visites et des acces reunions via QR code.
+
+\section{Entreprise d'accueil}
+L'entreprise d'accueil est ZUM-IT, societe orientee transformation digitale et developpement de solutions metier. Le stage s'inscrit dans une demarche de qualite logicielle, de securite applicative et d'industrialisation documentaire.
+
+\section{Etude de l'existant}
+L'etude initiale a montre une base applicative deja structuree en couches (web/service/repository/model) cote backend et une architecture par modules (screens/controllers/services/models) cote mobile. Les flux critiques identifies sont l'authentification, la gestion des reunions, le check-in visiteur et la validation QR.
+
+\section{Besoins fonctionnels et non fonctionnels}
+\subsection{Besoins fonctionnels}
+\begin{itemize}
+  \item Authentifier employes et visiteurs.
+  \item Gerer reunions, offices, employes et visiteurs.
+  \item Generer/scanner/valider les QR codes d'acces.
+  \item Assurer la tracabilite des acces.
+\end{itemize}
+\subsection{Besoins non fonctionnels}
+\begin{itemize}
+  \item Securite: JWT, TOTP, controle d'acces par role.
+  \item Maintenabilite: architecture modulaire et migrations versionnees.
+  \item Performance: endpoints pagines, separation claire des responsabilites.
+  \item Portabilite: application mobile Flutter multi-plateforme.
+\end{itemize}
+
+\section{Solution proposee}
+La solution proposee est une plateforme integree qui relie la creation de reunions, l'invitation de visiteurs, la generation de QR et la verification en temps reel. Le backend centralise les regles metier et la securite, tandis que le mobile assure l'experience operationnelle terrain.
+
+\section{Methodologie}
+Le projet a ete structure par sprints avec une approche iterative: analyse du code existant, validation des flux, documentation UML, puis consolidation des livrables (journal, rapport, collection API, guides techniques).
+
+\section{Conception (diagrammes)}
+Les diagrammes UML sources sont fournis dans le dossier \texttt{document/generated-diagrams}:
+\begin{itemize}
+  \item Diagrammes de classes (\texttt{class\_*.uml})
+  \item Diagrammes de sequence (\texttt{sequence\_*.uml})
+  \item Diagrammes de cas d'utilisation (\texttt{usecase\_*.uml})
+\end{itemize}
+Exemples de domaines modelises: authentification, gestion des reunions, flux QR, check-in visiteur, administration.
+
+\section{Technologies utilisees}
+\subsection{Backend}
+Java 17, Spring Boot, Spring Security, Spring Data JPA, Querydsl, PostgreSQL, Liquibase.
+\subsection{Frontend mobile}
+Flutter (Dart), Dio, Provider, Firebase (configuration/notifications).
+\subsection{Outils}
+Postman, LaTeX, scripts Python, documentation Markdown.
+
+\section{Architecture}
+\subsection{Architecture backend}
+Architecture en couches:
+\begin{itemize}
+  \item Controllers REST (\texttt{web})
+  \item Services metier (\texttt{service})
+  \item Repositories (\texttt{repository})
+  \item Entites/DTO (\texttt{model/domain}, \texttt{model/dto})
+\end{itemize}
+\subsection{Architecture frontend}
+Organisation par fonctionnalites:
+\begin{itemize}
+  \item \texttt{screens} pour l'UI
+  \item \texttt{controllers} pour l'orchestration
+  \item \texttt{services} pour les appels API
+  \item \texttt{models} pour les objets metier
+\end{itemize}
+\subsection{Base de donnees}
+Base PostgreSQL avec migrations Liquibase. Entites centrales: profiles (employees/visitors), meetings, offices, tokens, confirmations.
+\subsection{APIs et services}
+Endpoints principaux: \texttt{/meetings}, \texttt{/employees}, \texttt{/visitors}, \texttt{/offices}, \texttt{/participants}, \texttt{/users}, \texttt{/links}.
+\subsection{Flux d'authentification}
+\begin{itemize}
+  \item \texttt{POST /employees/token} (Basic) puis Bearer JWT.
+  \item \texttt{POST /visitors/token} (Basic + TOTP) puis Bearer JWT.
+\end{itemize}
+\subsection{Deploiement}
+Structure de deploiement disponible via Docker Compose (backend + PostgreSQL) avec variables d'environnement.
+
+\section{Avancement du projet}
+L'avancement est detaille dans le journal de stage mis a jour par sprint. Les livrables principaux produits sont:
+\begin{itemize}
+  \item Documentation architecture/API/workflow/setup.
+  \item Collection Postman complete.
+  \item Diagrammes UML sources generes et corriges (cardinalites ajoutees).
+  \item Rapport LaTeX final structure.
+\end{itemize}
+
+\section{Conclusion}
+Le projet VMS est une implementation full-stack coherente et professionnalisee. Le travail realise a permis d'aligner architecture, securite, documentation et modelisation UML. Les bases sont solides pour la maintenance et l'evolution future.
+
+\section*{Bibliographie (placeholder)}
+\begin{itemize}
+  \item Documentation Spring Boot / Spring Security.
+  \item Documentation Flutter / Dart.
+  \item Documentation PostgreSQL / Liquibase.
+  \item Documentation interne ZUM-IT.
+\end{itemize}
+
+\end{document}

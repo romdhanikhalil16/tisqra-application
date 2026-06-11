@@ -1,0 +1,130 @@
+---
+title: VMS — Diagramme de cas d'utilisation global
+---
+flowchart TB
+    %% Acteurs (UML : acteurs en périphérie du système)
+    EMP((Employé))
+    VIS((Visiteur))
+    ADM((Administrateur))
+    SEC((Agent sécurité))
+
+  subgraph VMS["«system» Visitor Management System (VMS)"]
+        direction TB
+
+        subgraph AUTH["Authentification & sécurité"]
+            UC_EMP_LOGIN(["UC01 — Se connecter\n(employé, Basic Auth)"])
+            UC_EMP_JWT(["UC02 — Obtenir JWT employé"])
+            UC_VIS_LOGIN(["UC03 — Se connecter visiteur\n(TOTP / Basic)"])
+            UC_VIS_JWT(["UC04 — Obtenir JWT visiteur"])
+            UC_CHG_PWD(["UC05 — Changer mot de passe employé"])
+            UC_AUTHZ(["UC06 — Accéder aux écrans autorisés\n(selon rôle JWT)"])
+        end
+
+        subgraph ADMIN["Administration"]
+            UC_OFF_LIST(["UC10 — Consulter bureaux"])
+            UC_OFF_CRUD(["UC11 — Créer / modifier / supprimer bureau"])
+            UC_OFF_MGR(["UC12 — Assigner manager de bureau"])
+            UC_EMP_MGT(["UC13 — Gérer employés"])
+            UC_DATA_SUP(["UC14 — Superviser cohérence des données"])
+        end
+
+        subgraph MEET["Réunions & invitations"]
+            UC_MEET_CREATE(["UC20 — Créer réunion"])
+            UC_MEET_LIST(["UC21 — Consulter réunions"])
+            UC_MEET_EDIT(["UC22 — Modifier réunion\n(hôte ou mandataire)"])
+            UC_MEET_ACCEPT(["UC23 — Accepter réunion /\nconfirmer participation"])
+            UC_MEET_CANCEL(["UC24 — Annuler réunion /\nrefuser participation"])
+            UC_MEET_STATUS(["UC25 — Faire évoluer le statut\n(pass, start, cancel…)"])
+            UC_MEET_DELETE(["UC26 — Supprimer réunion"])
+            UC_INVITE_EMAIL(["UC27 — Envoyer invitations\nvisiteurs (email / codes)"])
+        end
+
+        subgraph QR["Accès QR"]
+            UC_QR_SECRET(["UC30 — Obtenir secret participant\nGET /participants/{id}/secret"])
+            UC_QR_GEN(["UC31 — Générer QR d'accès\n(JWT signé mid, pid, exp…)"])
+            UC_QR_SCAN(["UC32 — Scanner QR"])
+            UC_QR_DECODE(["UC33 — Décoder payload QR"])
+            UC_QR_VERIFY(["UC34 — Vérifier validité d'accès\n(signature + règles métier)"])
+            UC_QR_RESULT(["UC35 — Afficher résultat\n(autorisé / refus / pas encore valide)"])
+            UC_QR_RESOLVE(["UC36 — Résoudre instantané réunion\nGET /meetings/{id}/resolve"])
+        end
+
+        subgraph VISREG["Visiteurs"]
+            UC_VIS_REG(["UC40 — Enregistrer visiteur\n(employé)"])
+            UC_VIS_CHECKIN(["UC41 — Effectuer check-in public\nPOST /visitors/checkin"])
+            UC_VIS_REDEEM(["UC42 — Rédemption invitation\nGET /visitors/redeem"])
+            UC_VIS_PROFILE(["UC43 — Mettre à jour profil visiteur"])
+            UC_VIS_REGISTRY(["UC44 — Superviser registre visiteurs"])
+        end
+    end
+
+    %% Associations acteur → cas d'utilisation
+    EMP --> UC_EMP_LOGIN
+    EMP --> UC_EMP_JWT
+    EMP --> UC_CHG_PWD
+    EMP --> UC_AUTHZ
+    EMP --> UC_OFF_LIST
+    EMP --> UC_MEET_CREATE
+    EMP --> UC_MEET_LIST
+    EMP --> UC_MEET_EDIT
+    EMP --> UC_MEET_ACCEPT
+    EMP --> UC_MEET_CANCEL
+    EMP --> UC_MEET_STATUS
+    EMP --> UC_QR_GEN
+    EMP --> UC_VIS_REG
+
+    VIS --> UC_VIS_LOGIN
+    VIS --> UC_VIS_JWT
+    VIS --> UC_AUTHZ
+    VIS --> UC_MEET_CREATE
+    VIS --> UC_MEET_LIST
+    VIS --> UC_MEET_ACCEPT
+    VIS --> UC_MEET_CANCEL
+    VIS --> UC_VIS_CHECKIN
+    VIS --> UC_VIS_REDEEM
+    VIS --> UC_VIS_PROFILE
+    VIS --> UC_QR_GEN
+
+    ADM --> UC_AUTHZ
+    ADM --> UC_OFF_LIST
+    ADM --> UC_OFF_CRUD
+    ADM --> UC_OFF_MGR
+    ADM --> UC_EMP_MGT
+    ADM --> UC_DATA_SUP
+    ADM --> UC_MEET_LIST
+    ADM --> UC_MEET_STATUS
+    ADM --> UC_MEET_DELETE
+    ADM --> UC_VIS_REGISTRY
+    ADM --> UC_QR_VERIFY
+
+    SEC --> UC_EMP_LOGIN
+    SEC --> UC_AUTHZ
+    SEC --> UC_QR_SCAN
+    SEC --> UC_QR_VERIFY
+    SEC --> UC_QR_RESULT
+
+    %% Relations <<include>> (obligatoire)
+    UC_EMP_LOGIN -.->|"<<include>>"| UC_EMP_JWT
+    UC_VIS_LOGIN -.->|"<<include>>"| UC_VIS_JWT
+    UC_EMP_JWT -.->|"<<include>>"| UC_AUTHZ
+    UC_VIS_JWT -.->|"<<include>>"| UC_AUTHZ
+
+    UC_QR_GEN -.->|"<<include>>"| UC_QR_SECRET
+    UC_QR_SCAN -.->|"<<include>>"| UC_QR_DECODE
+    UC_QR_SCAN -.->|"<<include>>"| UC_QR_VERIFY
+    UC_QR_VERIFY -.->|"<<include>>"| UC_QR_RESULT
+
+    UC_MEET_CREATE -.->|"<<include>>"| UC_INVITE_EMAIL
+    UC_MEET_ACCEPT -.->|"<<include>>"| UC_INVITE_EMAIL
+
+    UC_VIS_CHECKIN -.->|"<<include>>"| UC_INVITE_EMAIL
+
+    %% Relations <<extend>> (optionnel / variante)
+    UC_QR_VERIFY -.->|"<<extend>>"| UC_QR_RESOLVE
+    UC_MEET_STATUS -.->|"<<extend>>"| UC_MEET_DELETE
+
+    %% Styles UML (acteurs vs cas d'utilisation)
+    classDef actor fill:#f9f9f9,stroke:#333,stroke-width:2px
+    classDef system fill:#eef6ff,stroke:#2563eb,stroke-width:1px
+    class EMP,VIS,ADM,SEC actor
+    class VMS system

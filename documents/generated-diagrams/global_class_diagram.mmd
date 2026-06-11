@@ -1,0 +1,236 @@
+---
+title: VMS — Diagramme de classes global (domaine + couches applicatives)
+---
+classDiagram
+    direction TB
+
+    %% ─── Énumérations ───────────────────────────────────────────
+    class MeetingStatus {
+        <<enumeration>>
+        PENDING
+        CREATED
+        RESCHEDULED
+        CONFIRMED
+        CANCELED
+        EXPIRED
+        IN_PROGRESS
+        ENDED
+    }
+
+    class ConfirmationStatus {
+        <<enumeration>>
+        ACCEPTED
+        DECLINED
+        NO_RESPONSE
+    }
+
+    class TokenType {
+        <<enumeration>>
+        JSON_WEB_TOKEN
+        PASSWORD_RECOVERY_TOKEN
+        EMAIL_VERIFICATION_TOKEN
+        INVITE_TOKEN
+    }
+
+    %% ─── Modèle domaine (JPA) ───────────────────────────────────
+    class User {
+        <<abstract>>
+        #email: String
+        #firstName: String
+        #lastName: String
+        #phone: String
+        #profilePic: ImageData
+        #enabled: boolean
+        +getAuthorities() Collection
+    }
+
+    class Employee {
+        -password: String
+        -position: String
+        -admin: boolean
+    }
+
+    class Visitor {
+        -company: String
+        -secret: String
+        -loggedInBefore: boolean
+    }
+
+    class Office {
+        -id: Long
+        -name: String
+        -city: String
+        -country: String
+        -company: String
+        -address: String
+        -latitude: Double
+        -longitude: Double
+    }
+
+    class Meeting {
+        -id: Long
+        -status: MeetingStatus
+        -startTime: Instant
+        -endTime: Instant
+        -autoStart: boolean
+        -topic: String
+        -details: String
+        -secret: String
+    }
+
+    class Confirmation {
+        -id: Long
+        -confirmation: ConfirmationStatus
+    }
+
+    class Token {
+        -token: String
+        -expiryDate: LocalDateTime
+        -type: TokenType
+        -user: String
+    }
+
+    class ImageData {
+        <<value object>>
+        +bytes, mimeType
+    }
+
+  %% ─── DTOs (couche API) ─────────────────────────────────────
+    class MeetingDto {
+        <<DTO>>
+    }
+    class MeetingResolveDto {
+        <<DTO>>
+        status, secret, participant…
+    }
+    class UserSecretDto {
+        <<DTO>>
+        displayName
+        secret
+    }
+    class VisitorDto {
+        <<DTO>>
+    }
+    class OfficeDto {
+        <<DTO>>
+    }
+
+    %% ─── Couche web (Spring REST /vms) ─────────────────────────
+    class EmployeeWebController {
+        +login() JWT
+        +getAll() Page~EmployeeDto~
+        +add() EmployeeDto
+    }
+    class VisitorWebController {
+        +checkIn() 204
+        +redeemCode() FullVisitorDto
+        +login() JWT
+    }
+    class MeetingWebController {
+        +createMeeting() MeetingDto
+        +resolve() MeetingResolveDto
+        +acceptDraft()
+        +passMeeting()
+    }
+    class OfficeWebController {
+        +getAll() Page~OfficeDto~
+        +update() OfficeDto
+    }
+    class ParticipantWebController {
+        +getMeetingSecretForParticipant() UserSecretDto
+    }
+
+    %% ─── Services métier ───────────────────────────────────────
+    class EmployeeService {
+        +authenticate()
+        +login()
+        +isAdmin()
+    }
+    class VisitorService {
+        +checkIn()
+        +redeemCode()
+        +login()
+    }
+    class MeetingService {
+        +createMeeting()
+        +resolveMeetingForEmployee()
+        +getParticipantMeetingSecret()
+        +acceptDraft()
+    }
+    class OfficeService {
+        +add()
+        +modify()
+    }
+    class TokenService {
+        +generateJwtToken()
+        +generateInviteToken()
+    }
+
+    %% ─── Client mobile Flutter ───────────────────────────────────
+    class MeetingScannerController {
+        +processQRCode()
+        -_verifyJwt()
+    }
+    class MeetingScanResult {
+        +isValid: bool
+        +passNotExpired: bool
+    }
+    class TokenHolder {
+        -accessToken: String
+    }
+
+    %% ─── Héritage ───────────────────────────────────────────────
+    User <|-- Employee
+    User <|-- Visitor
+
+    %% ─── Associations domaine (multiplicités JPA) ───────────────
+    Meeting "1" --> "1" Office : office
+    Meeting "1" --> "1" Employee : organizer
+    Meeting "1" --> "0..1" Employee : proxy
+    Meeting "1" --> "0..*" Employee : guests
+    Meeting "1" --> "0..*" Visitor : visitors
+    Meeting "1" *-- "0..*" Confirmation : confirmations
+    Confirmation "0..*" --> "1" User : participant
+    Office "0..*" --> "0..1" Employee : manager
+    Employee "0..*" --> "0..1" Office : defaultOffice
+    Meeting ..> MeetingStatus : status
+    Confirmation ..> ConfirmationStatus : confirmation
+    User *-- "0..1" ImageData : profilePic
+    Token ..> TokenType : type
+
+    %% Token : référence logique par email (pas de FK JPA vers User)
+    Token "0..*" ..> "0..1" User : user email
+
+    %% ─── Couche application (dépendances) ───────────────────────
+    EmployeeWebController --> EmployeeService : uses
+    VisitorWebController --> VisitorService : uses
+    MeetingWebController --> MeetingService : uses
+    OfficeWebController --> OfficeService : uses
+    ParticipantWebController --> MeetingService : uses
+    VisitorService --> TokenService : uses
+    EmployeeService --> Employee : manages
+    VisitorService --> Visitor : manages
+    MeetingService --> Meeting : manages
+    OfficeService --> Office : manages
+
+    MeetingWebController ..> MeetingDto : returns
+    MeetingWebController ..> MeetingResolveDto : returns
+    ParticipantWebController ..> UserSecretDto : returns
+    VisitorWebController ..> VisitorDto : accepts
+    OfficeWebController ..> OfficeDto : returns
+
+    MeetingScannerController --> MeetingScanResult : creates
+    MeetingScannerController ..> MeetingWebController : HTTP
+    MeetingScannerController ..> ParticipantWebController : HTTP
+    MeetingScannerController ..> TokenHolder : Bearer JWT
+
+    note for Meeting
+        secret généré lors du passage
+        en statut CONFIRMED ; utilisé
+        pour signer le JWT du QR
+    end note
+
+    note for Confirmation
+        Contrainte UK (meeting_id, user_email)
+        un enregistrement par participant
+    end note

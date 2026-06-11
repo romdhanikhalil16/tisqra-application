@@ -1,0 +1,110 @@
+classDiagram
+    direction TB
+
+    class User {
+        <<abstract>>
+        #email String
+        #firstName String
+        #lastName String
+        #phone String
+        #enabled boolean
+    }
+
+    class Employee {
+        -password String
+        -position String
+        -admin boolean
+    }
+
+    class Visitor {
+        -company String
+        -secret String
+        -loggedInBefore boolean
+    }
+
+    class ImageData {
+        <<value object>>
+        +bytes byte[]
+        +mimeType String
+    }
+
+    class Office {
+        -id Long
+        -name String
+        -city String
+        -country String
+        -address String
+        -latitude Double
+        -longitude Double
+    }
+
+    class Meeting {
+        -id Long
+        -status MeetingStatus
+        -startTime Instant
+        -endTime Instant
+        -autoStart boolean
+        -topic String
+        -secret String
+    }
+
+    class Confirmation {
+        -id Long
+        -confirmation ConfirmationStatus
+    }
+
+    class Token {
+        -token String
+        -expiryDate LocalDateTime
+        -type TokenType
+        -user String
+    }
+
+    class MeetingStatus {
+        <<enumeration>>
+        PENDING
+        CREATED
+        RESCHEDULED
+        CONFIRMED
+        CANCELED
+        EXPIRED
+        IN_PROGRESS
+        ENDED
+    }
+
+    class ConfirmationStatus {
+        <<enumeration>>
+        ACCEPTED
+        DECLINED
+        NO_RESPONSE
+    }
+
+    class TokenType {
+        <<enumeration>>
+        JSON_WEB_TOKEN
+        PASSWORD_RECOVERY_TOKEN
+        EMAIL_VERIFICATION_TOKEN
+        INVITE_TOKEN
+    }
+
+    User <|-- Employee
+    User <|-- Visitor
+    User *-- "0..1" ImageData : profilePic
+
+    Office "0..*" --> "0..1" Employee : manager
+    Employee "0..*" --> "0..1" Office : defaultOffice
+
+    Meeting "1" --> "1" Office : office
+    Meeting "1" --> "1" Employee : organizer
+    Meeting "1" --> "0..1" Employee : proxy
+    Meeting "1" --> "0..*" Employee : guests
+    Meeting "1" --> "0..*" Visitor : visitors
+    Meeting "1" *-- "0..*" Confirmation : confirmations
+
+    Confirmation "0..*" --> "1" User : participant
+
+    Meeting ..> MeetingStatus : uses
+    Confirmation ..> ConfirmationStatus : uses
+    Token ..> TokenType : uses
+
+    Token "0..*" ..> "0..1" User : user email

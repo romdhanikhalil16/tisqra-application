@@ -1,0 +1,525 @@
+{
+  "info": {
+    "_postman_id": "9a963150-37d6-4ce0-9a8a-68f5d8e5e8f0",
+    "name": "VMS Backend API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Generated from Spring controllers in vms project. Base path includes /vms."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/vms" },
+    { "key": "bearerToken", "value": "" },
+    { "key": "employeeBasic", "value": "" },
+    { "key": "visitorBasic", "value": "" },
+    { "key": "meetingId", "value": "1" },
+    { "key": "officeId", "value": "1" },
+    { "key": "employeeId", "value": "employee@example.com" },
+    { "key": "visitorId", "value": "visitor@example.com" },
+    { "key": "participant", "value": "visitor@example.com" },
+    { "key": "inviteCode", "value": "SAMPLE-CODE" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Employee Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Basic {{employeeBasic}}", "type": "text" }
+            ],
+            "url": "{{baseUrl}}/employees/token",
+            "description": "Login with Basic auth (email:password). Returns JWT string."
+          },
+          "response": [
+            {
+              "name": "200 JWT",
+              "status": "OK",
+              "code": 200,
+              "body": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+          ]
+        },
+        {
+          "name": "Visitor Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Basic {{visitorBasic}}", "type": "text" }
+            ],
+            "url": "{{baseUrl}}/visitors/token",
+            "description": "Login with Basic auth (email:totpCode). Returns JWT string."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Meetings",
+      "item": [
+        {
+          "name": "List Meetings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/meetings?page=0&size=20"
+          },
+          "response": [
+            {
+              "name": "200 PagedResponse",
+              "status": "OK",
+              "code": 200,
+              "body": "{\"content\":[{\"id\":1,\"topic\":\"Vendor onboarding\",\"status\":\"CONFIRMED\"}],\"page\":{\"size\":20,\"number\":0,\"totalElements\":1,\"totalPages\":1}}"
+            }
+          ]
+        },
+        {
+          "name": "Get Meeting",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/meetings/{{meetingId}}"
+          }
+        },
+        {
+          "name": "Resolve Meeting",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/meetings/{{meetingId}}/resolve?participant={{participant}}"
+          },
+          "response": [
+            {
+              "name": "200 MeetingResolveDto",
+              "status": "OK",
+              "code": 200,
+              "body": "{\"id\":1,\"status\":\"PASSED\",\"organizerEmail\":\"employee@example.com\",\"participantEmail\":\"visitor@example.com\",\"secret\":\"meeting-secret\"}"
+            }
+          ]
+        },
+        {
+          "name": "Create Meeting",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startTime\": \"2026-05-10T09:00:00Z\",\n  \"endTime\": \"2026-05-10T10:00:00Z\",\n  \"autoStart\": true,\n  \"topic\": \"Project Kickoff\",\n  \"details\": \"Initial meeting\",\n  \"organizer\": \"employee@example.com\",\n  \"proxy\": \"delegate@example.com\",\n  \"guests\": [\"guest1@example.com\"],\n  \"visitors\": [\"visitor@example.com\"],\n  \"office\": { \"id\": 1 }\n}"
+            },
+            "url": "{{baseUrl}}/meetings"
+          }
+        },
+        {
+          "name": "Update Meeting (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"topic\": \"Updated Topic\",\n  \"details\": \"Updated details\",\n  \"office\": { \"id\": 1 }\n}" },
+            "url": "{{baseUrl}}/meetings/{{meetingId}}"
+          }
+        },
+        {
+          "name": "Patch Meeting",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"CONFIRMED\"\n}" },
+            "url": "{{baseUrl}}/meetings/{{meetingId}}"
+          }
+        },
+        {
+          "name": "Accept Draft",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/meetings/{{meetingId}}/accept"
+          }
+        },
+        {
+          "name": "Pass Meeting",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/meetings/{{meetingId}}/pass"
+          }
+        },
+        {
+          "name": "Start Meeting",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/meetings/{{meetingId}}/start"
+          }
+        },
+        {
+          "name": "Cancel Meeting",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/meetings/{{meetingId}}/cancel?details=Cancelled%20from%20Postman"
+          }
+        },
+        {
+          "name": "Delete Meeting",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/meetings/{{meetingId}}"
+          }
+        },
+        {
+          "name": "Bulk Delete Meetings",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "[1,2,3]" },
+            "url": "{{baseUrl}}/meetings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "List Employees",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/employees?page=0&size=20"
+          }
+        },
+        {
+          "name": "Get Employee",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/employees/{{employeeId}}"
+          }
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstname\": \"John\",\n  \"lastname\": \"Doe\",\n  \"email\": \"employee@example.com\",\n  \"password\": \"StrongPass123\",\n  \"position\": \"Manager\",\n  \"phone\": \"+21612345678\",\n  \"defaultOffice\": { \"id\": 1 }\n}"
+            },
+            "url": "{{baseUrl}}/employees"
+          }
+        },
+        {
+          "name": "Patch Employee",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"position\": \"Senior Manager\"\n}" },
+            "url": "{{baseUrl}}/employees/{{employeeId}}"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/employees/credentials?password=NewStrongPass123"
+          }
+        },
+        {
+          "name": "Upload Employee Picture",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "picture", "type": "file", "src": "" },
+                { "key": "remove", "value": "false", "type": "text" }
+              ]
+            },
+            "url": "{{baseUrl}}/employees/picture"
+          }
+        },
+        {
+          "name": "Resolve Employee by term",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/employees/resolve?term=john"
+          }
+        },
+        {
+          "name": "Delete Employee",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/employees/{{employeeId}}"
+          }
+        },
+        {
+          "name": "Bulk Delete Employees",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "[\"user1@example.com\",\"user2@example.com\"]" },
+            "url": "{{baseUrl}}/employees"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Visitors",
+      "item": [
+        {
+          "name": "List Visitors",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/visitors?page=0&size=20"
+          }
+        },
+        {
+          "name": "Get Visitor",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/visitors/{{visitorId}}"
+          }
+        },
+        {
+          "name": "Create Visitor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstname\": \"Sara\",\n  \"lastname\": \"Guest\",\n  \"email\": \"visitor@example.com\",\n  \"company\": \"Acme\",\n  \"phone\": \"+21623456789\"\n}"
+            },
+            "url": "{{baseUrl}}/visitors"
+          }
+        },
+        {
+          "name": "Patch Visitor",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"company\": \"New Company\"\n}" },
+            "url": "{{baseUrl}}/visitors/{{visitorId}}"
+          }
+        },
+        {
+          "name": "Upload Visitor Picture",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "picture", "type": "file", "src": "" },
+                { "key": "remove", "value": "false", "type": "text" }
+              ]
+            },
+            "url": "{{baseUrl}}/visitors/picture"
+          }
+        },
+        {
+          "name": "Public Check-in",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meeting\": 1,\n  \"firstname\": \"Sara\",\n  \"lastname\": \"Guest\",\n  \"email\": \"visitor@example.com\",\n  \"company\": \"Acme\",\n  \"secret\": \"otp-or-secret\"\n}"
+            },
+            "url": "{{baseUrl}}/visitors/checkin"
+          }
+        },
+        {
+          "name": "Public Redeem",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/visitors/redeem?code={{inviteCode}}&visitor={{visitorId}}"
+          },
+          "response": [
+            {
+              "name": "200 FullVisitorDto",
+              "status": "OK",
+              "code": 200,
+              "body": "{\"firstname\":\"Sara\",\"lastname\":\"Guest\",\"email\":\"visitor@example.com\",\"issuer\":\"VMS\",\"secret\":\"ABC123\",\"algorithm\":\"SHA1\",\"digits\":6,\"period\":15}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Visitor",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/visitors/{{visitorId}}"
+          }
+        },
+        {
+          "name": "Bulk Delete Visitors",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "[\"v1@example.com\",\"v2@example.com\"]" },
+            "url": "{{baseUrl}}/visitors"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Offices",
+      "item": [
+        {
+          "name": "List Offices",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/offices?page=0&size=20"
+          }
+        },
+        {
+          "name": "Get Office",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/offices/{{officeId}}"
+          }
+        },
+        {
+          "name": "Create Office",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"HQ\",\n  \"country\": \"TN\",\n  \"city\": \"Tunis\",\n  \"company\": \"Zum\",\n  \"address\": \"Main street\",\n  \"zipCode\": \"1000\",\n  \"latitude\": 36.8,\n  \"longitude\": 10.1,\n  \"manager\": \"employee@example.com\"\n}"
+            },
+            "url": "{{baseUrl}}/offices"
+          }
+        },
+        {
+          "name": "Patch Office",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"city\": \"Sfax\"\n}" },
+            "url": "{{baseUrl}}/offices/{{officeId}}"
+          }
+        },
+        {
+          "name": "Delete Office",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/offices/{{officeId}}"
+          }
+        },
+        {
+          "name": "Bulk Delete Offices",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "[1,2]" },
+            "url": "{{baseUrl}}/offices"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Participants and Users",
+      "item": [
+        {
+          "name": "Participant Secret",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }],
+            "url": "{{baseUrl}}/participants/{{meetingId}}/secret"
+          },
+          "response": [
+            {
+              "name": "200 UserSecretDto",
+              "status": "OK",
+              "code": 200,
+              "body": "{\"displayName\":\"Sara Guest\",\"secret\":\"meeting-secret\"}"
+            }
+          ]
+        },
+        {
+          "name": "Get User Type (public)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/{{employeeId}}"
+          },
+          "response": [
+            {
+              "name": "200 UserTypeDto",
+              "status": "OK",
+              "code": 200,
+              "body": "{\"type\":\"employee\"}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Deep Links",
+      "item": [
+        {
+          "name": "Defer Link (public)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/links/defer/{{inviteCode}}"
+          }
+        },
+        {
+          "name": "Redeem Link (public)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/links/redeem/{{inviteCode}}"
+          }
+        }
+      ]
+    }
+  ]
+}

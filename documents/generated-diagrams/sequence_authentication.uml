@@ -1,0 +1,29 @@
+@startuml
+title Sprint 1 - Sequence - Authentification employé
+
+actor Employé as Staff
+participant "App Flutter\n(Zentry Staff)" as App
+participant "API /vms" as API
+participant "EmployeeWebController" as C
+participant "EmployeeService" as S
+database "PostgreSQL" as DB
+
+Staff -> App : saisir email / mot de passe
+App -> API : POST /employees/token\nAuthorization: Basic …
+API -> C : login(Authentication)
+C -> S : login(auth)\n(émet JWT si identifiants valides)
+
+alt Identifiants valides
+  S -> DB : charger employé / valider mot de passe
+  DB --> S : compte actif
+  S --> C : chaîne JWT (raw)
+  C --> API : 200 application/jwt
+  API --> App : corps = JWT
+  App -> App : stocker token (Bearer)
+else Identifiants invalides / compte refusé
+  S --> C : échec d’authentification
+  C --> API : 401 Unauthorized
+  API --> App : pas de JWT
+end
+
+@enduml

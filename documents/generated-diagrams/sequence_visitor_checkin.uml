@@ -1,0 +1,48 @@
+@startuml
+title Sprint 4 - Sequence - Check-in visiteur (public)
+
+actor Visiteur as V
+participant "App Flutter\n(portail visiteur)" as App
+participant "API /vms" as API
+participant "VisitorWebController" as C
+participant "VisitorService" as S
+participant "TokenService" as T
+participant "EmailTemplateService" as M
+database "PostgreSQL" as DB
+
+V -> App : formulaire check-in (profil / email…)
+App -> API : POST /visitors/checkin\n(sans authentification)\nbody VisitorDto
+API -> C : checkIn(dto)
+C -> S : checkIn(visitor)
+
+alt Email déjà rattaché à un **employé**
+  S --> C : IllegalArgumentException
+  C --> API : 4xx
+  API --> App : refus « email non éligible »
+else Email accepté (parcours nominal)
+  S -> DB : get(email) ou **création** si absent
+  DB --> S : Visitor persisté
+  S -> T : generateInviteToken(visitor)
+  T -> DB : persistance jeton d’invitation
+  DB --> T : ok
+  T --> S : Token
+  S -> M : notifyCheckIn(visitor, token)\n(email : sujet accueil + QR TOTP)
+  alt Génération QR / envoi OK
+    M --> S : ok
+    S --> C : void
+    C --> API : **204 No Content**
+    API --> App : succès (pas de corps JSON)
+  else QrGenerationException / CodeGenerationException
+    M --> S : erreur
+    S --> C : exception
+    C --> API : 503 / erreur métier
+    API --> App : échec check-in
+  end
+end
+
+note right of S
+  Après coup, le visiteur peut s’authentifier via\
+  ``POST /visitors/token`` (Basic + TOTP) pour obtenir un JWT visiteur.
+end note
+
+@enduml

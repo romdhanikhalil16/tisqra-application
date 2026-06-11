@@ -1,0 +1,563 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\geometry{margin=2.2cm}
+
+\title{Documentation des Sprints - VMS}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Sprint 1 - Authentification et gestion des rôles}
+\subsection*{Explication}
+Cette fonctionnalité met en place l’authentification sécurisée des utilisateurs (employé/visiteur) et la gestion des autorisations par rôle. L’objectif métier est de garantir que chaque action sensible (consultation, modification, validation d’accès) soit exécutée uniquement par les profils autorisés, tout en offrant une connexion fluide pour les utilisateurs mobiles et les administrateurs.
+
+\subsection*{Diagramme de classes}
+\begin{verbatim}
+classDiagram
+%% Sprint 1
+class AuthController {
+  -jwtService: JwtService
+  -employeeService: EmployeeService
+  +loginEmployee(email: String, password: String): String
+  +loginVisitor(email: String, totpCode: String): String
+}
+
+class EmployeeService {
+  -employeeRepository: EmployeeRepository
+  -passwordEncoder: PasswordEncoder
+  +authenticate(email: String, password: String): Employee
+  +loadUserByUsername(email: String): Employee
+}
+
+class JwtService {
+  -privateKey: String
+  -publicKey: String
+  -ttlSeconds: long
+  +generateToken(subject: String, scope: String): String
+  +validateToken(token: String): boolean
+}
+
+class Employee {
+  -email: String
+  -passwordHash: String
+  -role: String
+  +checkPassword(raw: String): boolean
+  +toScope(): String
+}
+
+class AuthServiceMobile {
+  -dioClient: DioClient
+  -tokenHolder: TokenHolder
+  +loginEmployee(email: String, password: String): String
+  +saveToken(jwt: String): void
+}
+
+class TokenHolder {
+  -accessToken: String
+  -refreshAt: String
+  -userEmail: String
+  +getToken(): String
+  +clearToken(): void
+}
+
+AuthController "1" --> "1" EmployeeService : dependance
+AuthController "1" --> "1" JwtService : dependance
+EmployeeService "1" --> "0..*" Employee : utilise
+EmployeeService "1" --> "1" EmployeeRepository : dependance
+AuthServiceMobile "1" --> "1" TokenHolder : association
+AuthServiceMobile "1" --> "1" AuthController : appel API
+\end{verbatim}
+
+\subsection*{Diagramme de cas d’utilisation}
+\begin{verbatim}
+usecaseDiagram
+%% Sprint 1
+actor "Utilisateur" as U
+actor "Admin" as A
+
+rectangle "VMS - Authentification" {
+  usecase "Se connecter" as UC1
+  usecase "Recevoir JWT" as UC2
+  usecase "Acceder aux ecrans autorises" as UC3
+  usecase "Gerer les roles et permissions" as UC4
+  usecase "Reinitialiser les acces" as UC5
+}
+
+U --> UC1
+U --> UC2
+U --> UC3
+A --> UC4
+A --> UC5
+A --> UC3
+\end{verbatim}
+
+\subsection*{Diagramme de séquence}
+\begin{verbatim}
+sequenceDiagram
+%% Sprint 1
+participant Mobile as App Flutter
+participant API as API /vms
+participant C as AuthController
+participant S as EmployeeService
+participant R as EmployeeRepository
+participant DB as PostgreSQL
+
+Mobile->>API: POST /employees/token (Basic)
+API->>C: loginEmployee(email,password)
+C->>S: authenticate(email,password)
+S->>R: findByEmail(email)
+R->>DB: SELECT employee by email
+DB-->>R: employee row
+R-->>S: Employee
+S-->>C: Employee valide
+C-->>API: JWT
+API-->>Mobile: 200 token
+Mobile->>Mobile: saveToken(token)
+\end{verbatim}
+
+\section*{Sprint 2 - Gestion des réunions}
+\subsection*{Explication}
+Cette fonctionnalité couvre le cycle de vie des réunions : création, consultation, modification et transitions de statut. L’objectif métier est de centraliser l’organisation des visites et de synchroniser les informations entre organisateur, participants et système de contrôle d’accès.
+
+\subsection*{Diagramme de classes}
+\begin{verbatim}
+classDiagram
+%% Sprint 2
+class MeetingController {
+  -meetingService: MeetingService
+  -securityContext: SecurityContext
+  +createMeeting(dto: MeetingDto): MeetingDto
+  +updateMeeting(id: Long, dto: MeetingDto): MeetingDto
+}
+
+class MeetingService {
+  -meetingRepository: MeetingRepository
+  -officeRepository: OfficeRepository
+  -employeeRepository: EmployeeRepository
+  +create(dto: MeetingDto, actor: String): Meeting
+  +changeStatus(id: Long, status: String): void
+}
+
+class MeetingRepository {
+  -entityManager: EntityManager
+  -tableName: String
+  +save(meeting: Meeting): Meeting
+  +findById(id: Long): Meeting
+}
+
+class Meeting {
+  -id: Long
+  -topic: String
+  -status: String
+  -startTime: String
+  -endTime: String
+  +isEditable(): boolean
+  +setStatus(newStatus: String): void
+}
+
+class MeetingServiceMobile {
+  -dioClient: DioClient
+  -baseUrl: String
+  +fetchMeetings(page: int): List~MeetingModel~
+  +createMeeting(data: Map): MeetingModel
+}
+
+class MeetingModel {
+  -id: int
+  -topic: String
+  -status: String
+  -startTime: String
+  +fromJson(json: Map): MeetingModel
+  +toJson(): Map
+}
+
+MeetingController "1" --> "1" MeetingService : dependance
+MeetingService "1" --> "1" MeetingRepository : dependance
+MeetingRepository "1" --> "0..*" Meeting : persistance
+MeetingServiceMobile "1" --> "1" MeetingController : appel API
+MeetingServiceMobile "1" --> "0..*" MeetingModel : conversion
+\end{verbatim}
+
+\subsection*{Diagramme de cas d’utilisation}
+\begin{verbatim}
+usecaseDiagram
+%% Sprint 2
+actor "Utilisateur" as U
+actor "Admin" as A
+
+rectangle "VMS - Reunions" {
+  usecase "Creer une reunion" as UC1
+  usecase "Consulter les reunions" as UC2
+  usecase "Modifier une reunion" as UC3
+  usecase "Changer le statut de reunion" as UC4
+  usecase "Supprimer une reunion" as UC5
+}
+
+U --> UC1
+U --> UC2
+U --> UC3
+U --> UC4
+A --> UC2
+A --> UC4
+A --> UC5
+\end{verbatim}
+
+\subsection*{Diagramme de séquence}
+\begin{verbatim}
+sequenceDiagram
+%% Sprint 2
+participant Mobile as App Flutter
+participant API as API /vms
+participant C as MeetingController
+participant S as MeetingService
+participant R as MeetingRepository
+participant DB as PostgreSQL
+
+Mobile->>API: POST /meetings (Bearer + JSON)
+API->>C: createMeeting(dto)
+C->>S: create(dto, actor)
+S->>R: save(meeting)
+R->>DB: INSERT meeting
+DB-->>R: meeting_id
+R-->>S: Meeting persisted
+S-->>C: MeetingDto
+C-->>API: 201 Created
+API-->>Mobile: MeetingDto JSON
+\end{verbatim}
+
+\section*{Sprint 3 - Génération et validation des QR codes}
+\subsection*{Explication}
+Cette fonctionnalité permet de générer des QR codes d’accès liés à une réunion et de les valider au scan. L’objectif métier est de sécuriser le contrôle d’entrée, réduire le temps de vérification et garantir la traçabilité des accès autorisés/refusés.
+
+\subsection*{Diagramme de classes}
+\begin{verbatim}
+classDiagram
+%% Sprint 3
+class ParticipantController {
+  -meetingService: MeetingService
+  -participantService: ParticipantService
+  +getSecret(meetingId: Long): UserSecretDto
+  +resolveMeeting(meetingId: Long, participant: String): MeetingResolveDto
+}
+
+class ParticipantService {
+  -meetingRepository: MeetingRepository
+  -employeeRepository: EmployeeRepository
+  -visitorRepository: VisitorRepository
+  +fetchParticipantSecret(meetingId: Long, user: String): String
+  +isParticipantAllowed(meetingId: Long, email: String): boolean
+}
+
+class UserSecretDto {
+  -displayName: String
+  -secret: String
+  -meetingId: Long
+  +maskSecret(): String
+  +toJson(): Map
+}
+
+class QrPopupControllerMobile {
+  -participantServiceMobile: ParticipantServiceMobile
+  -jwtHelper: JwtHelper
+  +buildQrPayload(meetingId: int, participant: String): String
+  +generateQrToken(payload: Map): String
+}
+
+class MeetingScannerControllerMobile {
+  -meetingServiceMobile: MeetingServiceMobile
+  -jwtHelper: JwtHelper
+  +scanAndDecode(raw: String): Map
+  +verifyAccess(meetingId: int, participant: String): bool
+}
+
+class ParticipantServiceMobile {
+  -dioClient: DioClient
+  -baseUrl: String
+  -tokenHolder: TokenHolder
+  +getParticipantSecret(meetingId: int): Map
+  +resolveMeeting(meetingId: int, participant: String): Map
+}
+
+ParticipantController "1" --> "1" ParticipantService : dependance
+ParticipantService "1" --> "0..*" UserSecretDto : construit
+QrPopupControllerMobile "1" --> "1" ParticipantServiceMobile : dependance
+MeetingScannerControllerMobile "1" --> "1" ParticipantServiceMobile : dependance
+ParticipantServiceMobile "1" --> "1" ParticipantController : appel API
+\end{verbatim}
+
+\subsection*{Diagramme de cas d’utilisation}
+\begin{verbatim}
+usecaseDiagram
+%% Sprint 3
+actor "Utilisateur" as U
+actor "Admin" as A
+
+rectangle "VMS - QR Access" {
+  usecase "Generer QR d'acces" as UC1
+  usecase "Scanner QR" as UC2
+  usecase "Verifier validite d'acces" as UC3
+  usecase "Afficher resultat autorise/refuse" as UC4
+  usecase "Auditer les acces" as UC5
+}
+
+U --> UC1
+U --> UC2
+U --> UC3
+U --> UC4
+A --> UC5
+A --> UC3
+\end{verbatim}
+
+\subsection*{Diagramme de séquence}
+\begin{verbatim}
+sequenceDiagram
+%% Sprint 3
+participant Scanner as App Scanner Flutter
+participant API as API /vms
+participant C as ParticipantController
+participant S as ParticipantService
+participant R as MeetingRepository
+participant DB as PostgreSQL
+
+Scanner->>API: GET /meetings/{id}/resolve?participant=email
+API->>C: resolveMeeting(id, participant)
+C->>S: isParticipantAllowed(id, email)
+S->>R: findMeetingWithParticipants(id)
+R->>DB: SELECT meeting + participants
+DB-->>R: meeting data
+R-->>S: Meeting aggregate
+S-->>C: allowed + secret
+C-->>API: MeetingResolveDto
+API-->>Scanner: 200 access decision
+Scanner->>Scanner: show Pass/Reject screen
+\end{verbatim}
+
+\section*{Sprint 4 - Gestion visiteurs et check-in}
+\subsection*{Explication}
+Cette fonctionnalité gère l’enregistrement des visiteurs, le redeem des invitations et le check-in à l’arrivée. L’objectif métier est de fluidifier l’accueil, fiabiliser les informations des visiteurs et connecter l’identité du visiteur à une réunion valide.
+
+\subsection*{Diagramme de classes}
+\begin{verbatim}
+classDiagram
+%% Sprint 4
+class VisitorController {
+  -visitorService: VisitorService
+  -tokenService: TokenService
+  +createVisitor(dto: VisitorDto): VisitorDto
+  +checkIn(dto: CheckInDto): void
+}
+
+class VisitorService {
+  -visitorRepository: VisitorRepository
+  -meetingRepository: MeetingRepository
+  -tokenRepository: TokenRepository
+  +redeem(code: String, visitor: String): FullVisitorDto
+  +checkIn(dto: CheckInDto): boolean
+}
+
+class Visitor {
+  -email: String
+  -firstname: String
+  -lastname: String
+  -company: String
+  +fullName(): String
+  +updateProfile(company: String, phone: String): void
+}
+
+class VisitorCheckinControllerMobile {
+  -visitorServiceMobile: VisitorServiceMobile
+  -userServiceMobile: UserServiceMobile
+  +submitCheckIn(form: Map): bool
+  +routeByUserType(email: String): String
+}
+
+class VisitorServiceMobile {
+  -dioClient: DioClient
+  -baseUrl: String
+  -tokenHolder: TokenHolder
+  +checkIn(data: Map): bool
+  +redeemInvite(code: String, visitor: String): Map
+}
+
+class FullVisitorModel {
+  -email: String
+  -issuer: String
+  -secret: String
+  +fromJson(json: Map): FullVisitorModel
+  +toQrLoginPayload(): Map
+}
+
+VisitorController "1" --> "1" VisitorService : dependance
+VisitorService "1" --> "0..*" Visitor : manipule
+VisitorCheckinControllerMobile "1" --> "1" VisitorServiceMobile : dependance
+VisitorServiceMobile "1" --> "1" VisitorController : appel API
+VisitorServiceMobile "1" --> "0..*" FullVisitorModel : conversion
+\end{verbatim}
+
+\subsection*{Diagramme de cas d’utilisation}
+\begin{verbatim}
+usecaseDiagram
+%% Sprint 4
+actor "Utilisateur" as U
+actor "Admin" as A
+
+rectangle "VMS - Visiteurs" {
+  usecase "Enregistrer un visiteur" as UC1
+  usecase "Redeem code d'invitation" as UC2
+  usecase "Effectuer check-in" as UC3
+  usecase "Mettre a jour profil visiteur" as UC4
+  usecase "Superviser le registre visiteurs" as UC5
+}
+
+U --> UC1
+U --> UC2
+U --> UC3
+U --> UC4
+A --> UC5
+A --> UC4
+\end{verbatim}
+
+\subsection*{Diagramme de séquence}
+\begin{verbatim}
+sequenceDiagram
+%% Sprint 4
+participant Mobile as App Visitor Flutter
+participant API as API /vms
+participant C as VisitorController
+participant S as VisitorService
+participant R as VisitorRepository
+participant DB as PostgreSQL
+
+Mobile->>API: POST /visitors/checkin (CheckInDto)
+API->>C: checkIn(dto)
+C->>S: checkIn(dto)
+S->>R: findByEmail(dto.email)
+R->>DB: SELECT visitor by email
+DB-->>R: visitor row
+R-->>S: Visitor
+S->>DB: UPDATE checkin state
+DB-->>S: ok
+S-->>C: true
+C-->>API: 200 OK
+API-->>Mobile: check-in success
+\end{verbatim}
+
+\section*{Sprint 5 - Administration, offices et gouvernance opérationnelle}
+\subsection*{Explication}
+Cette fonctionnalité couvre les opérations d’administration (gestion offices, utilisateurs, supervision des données) pour garantir un fonctionnement stable en production. L’objectif métier est de donner à l’admin une vision de contrôle globale, avec des actions de maintenance sécurisées et traçables.
+
+\subsection*{Diagramme de classes}
+\begin{verbatim}
+classDiagram
+%% Sprint 5
+class OfficeController {
+  -officeService: OfficeService
+  -employeeService: EmployeeService
+  +createOffice(dto: OfficeDto): OfficeDto
+  +updateOffice(id: Long, dto: OfficeDto): OfficeDto
+}
+
+class OfficeService {
+  -officeRepository: OfficeRepository
+  -employeeRepository: EmployeeRepository
+  -auditService: AuditService
+  +assignManager(officeId: Long, managerEmail: String): void
+  +deleteOffice(officeId: Long): void
+}
+
+class Office {
+  -id: Long
+  -name: String
+  -city: String
+  -country: String
+  +changeLocation(city: String, country: String): void
+  +setManager(email: String): void
+}
+
+class AdminDashboardControllerMobile {
+  -officeServiceMobile: OfficeServiceMobile
+  -employeeServiceMobile: EmployeeServiceMobile
+  +loadAdminOverview(): Map
+  +triggerOfficeUpdate(data: Map): bool
+}
+
+class OfficeServiceMobile {
+  -dioClient: DioClient
+  -baseUrl: String
+  -tokenHolder: TokenHolder
+  +fetchOffices(): List~OfficeModel~
+  +updateOffice(id: int, payload: Map): OfficeModel
+}
+
+class OfficeModel {
+  -id: int
+  -name: String
+  -city: String
+  -country: String
+  +fromJson(json: Map): OfficeModel
+  +toJson(): Map
+}
+
+OfficeController "1" --> "1" OfficeService : dependance
+OfficeService "1" --> "0..*" Office : manipule
+AdminDashboardControllerMobile "1" --> "1" OfficeServiceMobile : dependance
+OfficeServiceMobile "1" --> "1" OfficeController : appel API
+OfficeServiceMobile "1" --> "0..*" OfficeModel : conversion
+\end{verbatim}
+
+\subsection*{Diagramme de cas d’utilisation}
+\begin{verbatim}
+usecaseDiagram
+%% Sprint 5
+actor "Utilisateur" as U
+actor "Admin" as A
+
+rectangle "VMS - Administration" {
+  usecase "Consulter offices" as UC1
+  usecase "Creer / modifier office" as UC2
+  usecase "Assigner manager office" as UC3
+  usecase "Supprimer entites obsoletes" as UC4
+  usecase "Superviser coherence des donnees" as UC5
+}
+
+U --> UC1
+A --> UC1
+A --> UC2
+A --> UC3
+A --> UC4
+A --> UC5
+\end{verbatim}
+
+\subsection*{Diagramme de séquence}
+\begin{verbatim}
+sequenceDiagram
+%% Sprint 5
+participant Mobile as Admin Mobile App
+participant API as API /vms
+participant C as OfficeController
+participant S as OfficeService
+participant R as OfficeRepository
+participant DB as PostgreSQL
+
+Mobile->>API: PATCH /offices/{id} (OfficeDto)
+API->>C: updateOffice(id, dto)
+C->>S: assignManager(id, dto.manager)
+S->>R: findById(id)
+R->>DB: SELECT office by id
+DB-->>R: office row
+R-->>S: Office
+S->>R: save(office updated)
+R->>DB: UPDATE office
+DB-->>R: ok
+R-->>S: Office updated
+S-->>C: OfficeDto
+C-->>API: 200 updated
+API-->>Mobile: OfficeDto JSON
+\end{verbatim}
+
+\end{document}
